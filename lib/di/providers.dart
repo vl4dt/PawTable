@@ -5,6 +5,7 @@ import '../core/billing/billing_service.dart';
 import '../core/adapters/hive_adapters.dart';
 import '../features/pets/domain/repositories/pet_repository.dart';
 import '../features/pets/presentation/providers/pet_provider.dart';
+import '../features/onboarding/domain/services/onboarding_service.dart';
 import 'app_module.dart';
 
 /// Dependency injection providers
@@ -29,6 +30,11 @@ final billingServiceProvider = Provider<BillingService>((ref) {
 // Pet repository
 final petRepositoryProvider = Provider<PetRepository>((ref) {
   return getIt<PetRepository>();
+});
+
+// Onboarding
+final onboardingServiceProvider = Provider<OnboardingService>((ref) {
+  return getIt<OnboardingService>();
 });
 
 /// Async provider that initializes all services on app start

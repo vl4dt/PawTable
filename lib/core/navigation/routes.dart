@@ -16,6 +16,7 @@ import '../../features/family/presentation/views/family_view.dart';
 import '../../features/premium/presentation/views/premium_view.dart';
 import '../../features/profile/presentation/views/profile_view.dart';
 import '../../features/home/presentation/views/home_dashboard.dart';
+import '../../features/onboarding/presentation/views/onboarding_view.dart';
 
 // =========================================================================
 // Route Definitions
@@ -170,126 +171,6 @@ class _PawTableShell extends StatelessWidget {
 }
 
 // =========================================================================
-// Onboarding Views
-// =========================================================================
-
-class _OnboardingWelcome extends StatelessWidget {
-  const _OnboardingWelcome();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.pets, size: 80, color: PawTableColors.primary),
-              const SizedBox(height: 24),
-              Text(
-                'Welcome to PawTable',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Your Pet, At Your Table',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: PawTableColors.primaryDark,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: () => context.go(AppRoutes.onboardingPetSetup),
-                child: const Text('Get Started'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OnboardingPetSetup extends StatelessWidget {
-  const _OnboardingPetSetup();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Your Pet')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Pet Setup — coming soon',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Select pet type, breed, and enter basic info',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: () {
-                  final container = ProviderScope.containerOf(context, listen: false);
-                  container.read(appStateProvider.notifier).completeOnboarding();
-                  context.go(AppRoutes.onboardingComplete);
-                },
-                child: const Text('Skip for Now'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OnboardingComplete extends StatelessWidget {
-  const _OnboardingComplete();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.check_circle, size: 80, color: PawTableColors.success),
-              const SizedBox(height: 24),
-              Text(
-                "You're All Set!",
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Start managing your pet\'s wellness journey',
-                style: Theme.of(context).textTheme.bodyLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: () => context.go(AppRoutes.home),
-                child: const Text('Go to Home'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =========================================================================
 // GoRouter Configuration
 // =========================================================================
 
@@ -330,17 +211,7 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: AppRoutes.onboardingWelcome,
       name: 'onboarding-welcome',
-      builder: (context, state) => const _OnboardingWelcome(),
-    ),
-    GoRoute(
-      path: AppRoutes.onboardingPetSetup,
-      name: 'onboarding-setup',
-      builder: (context, state) => const _OnboardingPetSetup(),
-    ),
-    GoRoute(
-      path: AppRoutes.onboardingComplete,
-      name: 'onboarding-complete',
-      builder: (context, state) => const _OnboardingComplete(),
+      builder: (context, state) => const OnboardingView(),
     ),
 
     // =========================================================================

@@ -5,6 +5,7 @@ import '../core/billing/billing_service.dart';
 import '../features/pets/data/data_sources/pet_local_data_source.dart';
 import '../features/pets/data/repositories/pet_repository_impl.dart';
 import '../features/pets/domain/repositories/pet_repository.dart';
+import '../features/onboarding/domain/services/onboarding_service.dart';
 
 /// GetIt instance for dependency injection
 final getIt = GetIt.instance;
@@ -32,5 +33,10 @@ void configureDependencies(String env) {
     // Pet repository
     ..registerFactory<PetRepository>(
       () => PetRepositoryImpl(dataSource: getIt<PetLocalDataSource>()),
+    )
+
+    // Onboarding
+    ..registerFactory<OnboardingService>(
+      () => OnboardingService(storageService: getIt<StorageService>()),
     );
 }
