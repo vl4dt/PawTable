@@ -6,11 +6,12 @@ import '../../main.dart' show PawTableApp;
 /// App initializer widget
 ///
 /// Handles app startup sequence:
-/// 1. Initialize DI container (GetIt)
-/// 2. Initialize local storage (Hive, SQLite)
-/// 3. Load user preferences
-/// 4. Check for pending syncs
-/// 5. Display splash screen until ready
+/// 1. Initialize Firebase (gracefully skips if config is placeholder)
+/// 2. Initialize DI container (GetIt)
+/// 3. Initialize local storage (Hive, SQLite)
+/// 4. Load user preferences
+/// 5. Check for pending syncs
+/// 6. Display splash screen until ready
 class AppInitializer extends ConsumerWidget {
   final Widget child;
   const AppInitializer({

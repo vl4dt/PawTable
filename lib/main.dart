@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/firebase/firebase_service.dart';
 import 'core/theme/themes.dart';
 import 'core/navigation/routes.dart';
 import 'shared/providers/app_state_provider.dart';
@@ -7,7 +8,7 @@ import 'shared/widgets/app_initializer.dart';
 
 /// PawTable — Your Pet, At Your Table
 ///
-/// Main entry point. Initializes Flutter, sets up Riverpod,
+/// Main entry point. Initializes Flutter and Firebase, sets up Riverpod,
 /// configures the theme and router, and runs the app.
 ///
 /// Architecture: Clean Architecture with Riverpod state management.
@@ -16,8 +17,14 @@ import 'shared/widgets/app_initializer.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // TODO: Initialize Firebase (see PROJECT-DESIGN.md)
-  // await Firebase.initializeApp();
+  // Initialize Firebase (gracefully skips if config is placeholder)
+  final firebaseService = FirebaseService();
+  try {
+    await firebaseService.initialize();
+  } catch (e) {
+    // App continues in offline-only mode
+    debugPrint('Firebase init failed (offline mode): $e');
+  }
 
   runApp(
     ProviderScope(
