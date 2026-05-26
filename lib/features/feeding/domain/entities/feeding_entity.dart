@@ -1,9 +1,48 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import '../../../../core/models/base_model.dart';
 import '../../../../core/models/base_model.dart' show JsonHelpers;
 
 /// Feeding type
 enum FeedingType { dry, wet, raw, homemade, treat, supplement }
+
+/// Extension to get icon for each feeding type
+extension FeedingTypeIcon on FeedingType {
+  IconData get icon {
+    switch (this) {
+      case FeedingType.dry:
+        return Icons.grain;
+      case FeedingType.wet:
+        return Icons.dinner_dining;
+      case FeedingType.raw:
+        return Icons.waves;
+      case FeedingType.homemade:
+        return Icons.kitchen;
+      case FeedingType.treat:
+        return Icons.cookie;
+      case FeedingType.supplement:
+        return Icons.medication;
+    }
+  }
+
+  /// Human-readable label for each feeding type
+  String get label {
+    switch (this) {
+      case FeedingType.dry:
+        return 'Dry Food';
+      case FeedingType.wet:
+        return 'Wet Food';
+      case FeedingType.raw:
+        return 'Raw Diet';
+      case FeedingType.homemade:
+        return 'Homemade';
+      case FeedingType.treat:
+        return 'Treat';
+      case FeedingType.supplement:
+        return 'Water Intake';
+    }
+  }
+}
 
 /// Feeding entity
 class FeedingEntity extends Equatable {

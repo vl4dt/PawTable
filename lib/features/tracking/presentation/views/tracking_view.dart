@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/navigation/routes.dart';
-import '../../../../core/theme/colors.dart';
 import '../../../pets/domain/entities/pet_entity.dart';
 import '../../../pets/presentation/providers/pet_provider.dart';
 import 'weight_history_view.dart';
