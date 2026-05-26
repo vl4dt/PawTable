@@ -131,4 +131,22 @@ class DatabaseHelper {
     final db = await database;
     await db.close();
   }
+
+  // Pet CRUD
+  Future<int> upsertPet(Map<String, dynamic> pet) async {
+    final db = await database;
+    final existing = await db.query('pets', where: 'id = ?', whereArgs: [pet['id']]);
+    if (existing.isNotEmpty) {
+      await db.update('pets', pet, where: 'id = ?', whereArgs: [pet['id']]);
+      return 1;
+    } else {
+      await db.insert('pets', pet); // ignoreDuplicates
+      return 1;
+    }
+  }
+
+  Future<int> deletePet(String id) async {
+    final db = await database;
+    return await db.delete('pets', where: 'id = ?', whereArgs: [id]);
+  }
 }

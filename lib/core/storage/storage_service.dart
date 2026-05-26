@@ -17,6 +17,11 @@ class StorageService {
     _healthBoxInstance = await Hive.openBox(_healthBox);
   }
 
+  // Box accessors
+  Box<dynamic> get settingsBox => _settingsBoxInstance;
+  Box<dynamic> get petsBox => _petsBoxInstance;
+  Box<dynamic> get healthBox => _healthBoxInstance;
+
   // Settings
   dynamic getSetting(String key, {dynamic defaultValue}) {
     return _settingsBoxInstance.get(key, defaultValue: defaultValue);
