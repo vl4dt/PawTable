@@ -29,14 +29,14 @@ class PetRepositoryImpl implements PetRepository {
   @override
   Future<List<PetEntity>> getAll() async {
     final models = await dataSource.getAllPets();
-    return models.map((m) => _toEntity(m.toJson())).toList();
+    return models.map((m) => _toEntity(m.toEntityJson())).toList();
   }
 
   @override
   Future<PetEntity?> getById(String id) async {
     final model = await dataSource.getPet(id);
     if (model == null) return null;
-    return _toEntity(model.toJson());
+    return _toEntity(model.toEntityJson());
   }
 
   @override
@@ -59,7 +59,7 @@ class PetRepositoryImpl implements PetRepository {
   @override
   Future<List<PetEntity>> search(String query) async {
     final models = await dataSource.searchPets(query);
-    return models.map((m) => _toEntity(m.toJson())).toList();
+    return models.map((m) => _toEntity(m.toEntityJson())).toList();
   }
 
   @override

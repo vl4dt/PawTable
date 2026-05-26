@@ -2,6 +2,10 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
 /// SQLite helper for structured tracking data (feeding, vaccines, medications, etc.)
+///
+/// All operations are async and use lazy singleton pattern for database access.
+/// Schema includes: pets, feeding_logs, vaccinations, medications, weight_logs,
+/// behavior_logs, family_members with foreign keys and indexes.
 class DatabaseHelper {
   static Database? _database;
   static const int _databaseVersion = 1;
@@ -132,7 +136,10 @@ class DatabaseHelper {
     await db.close();
   }
 
-  // Pet CRUD
+  // =========================================================================
+  // PETS
+  // =========================================================================
+
   Future<int> upsertPet(Map<String, dynamic> pet) async {
     final db = await database;
     final existing = await db.query('pets', where: 'id = ?', whereArgs: [pet['id']]);
@@ -140,13 +147,180 @@ class DatabaseHelper {
       await db.update('pets', pet, where: 'id = ?', whereArgs: [pet['id']]);
       return 1;
     } else {
-      await db.insert('pets', pet); // ignoreDuplicates
-      return 1;
+      return await db.insert('pets', pet);
     }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllPets() async {
+    final db = await database;
+    return await db.query('pets', orderBy: 'createdAt DESC');
+  }
+
+  Future<Map<String, dynamic>?> getPet(String id) async {
+    final db = await database;
+    final results = await db.query('pets', where: 'id = ?', whereArgs: [id]);
+    return results.isNotEmpty ? results.first : null;
   }
 
   Future<int> deletePet(String id) async {
     final db = await database;
+    // Delete related records first
+    await db.delete('feeding_logs', where: 'petId = ?', whereArgs: [id]);
+    await db.delete('vaccinations', where: 'petId = ?', whereArgs: [id]);
+    await db.delete('medications', where: 'petId = ?', whereArgs: [id]);
+    await db.delete('weight_logs', where: 'petId = ?', whereArgs: [id]);
+    await db.delete('behavior_logs', where: 'petId = ?', whereArgs: [id]);
+    await db.delete('family_members', where: 'petId = ?', whereArgs: [id]);
     return await db.delete('pets', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =========================================================================
+  // FEEDING LOGS
+  // =========================================================================
+
+  Future<int> insertFeedingLog(Map<String, dynamic> log) async {
+    final db = await database;
+    return await db.insert('feeding_logs', log);
+  }
+
+  Future<List<Map<String, dynamic>>> getFeedingLogsByPet(String petId,
+      {DateTime? from, DateTime? to}) async {
+    final db = await database;
+    String query = 'petId = ?';
+    List<dynamic> args = [petId];
+    if (from != null) {
+      query += ' AND time >= ?';
+      args.add(from.toIso8601String());
+    }
+    if (to != null) {
+      query += ' AND time <= ?';
+      args.add(to.toIso8601String());
+    }
+    return await db.query('feeding_logs', where: query, whereArgs: args,
+        orderBy: 'time DESC');
+  }
+
+  Future<int> updateFeedingLog(String id, Map<String, dynamic> log) async {
+    final db = await database;
+    return await db.update('feeding_logs', log, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteFeedingLog(String id) async {
+    final db = await database;
+    return await db.delete('feeding_logs', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =========================================================================
+  // VACCINATIONS
+  // =========================================================================
+
+  Future<int> insertVaccination(Map<String, dynamic> record) async {
+    final db = await database;
+    return await db.insert('vaccinations', record);
+  }
+
+  Future<List<Map<String, dynamic>>> getVaccinationsByPet(String petId) async {
+    final db = await database;
+    return await db.query('vaccinations', where: 'petId = ?', whereArgs: [petId],
+        orderBy: 'dateIssued DESC');
+  }
+
+  Future<int> updateVaccination(String id, Map<String, dynamic> record) async {
+    final db = await database;
+    return await db.update('vaccinations', record, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteVaccination(String id) async {
+    final db = await database;
+    return await db.delete('vaccinations', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =========================================================================
+  // MEDICATIONS
+  // =========================================================================
+
+  Future<int> insertMedication(Map<String, dynamic> record) async {
+    final db = await database;
+    return await db.insert('medications', record);
+  }
+
+  Future<List<Map<String, dynamic>>> getMedicationsByPet(String petId) async {
+    final db = await database;
+    return await db.query('medications', where: 'petId = ?', whereArgs: [petId],
+        orderBy: 'startDate DESC');
+  }
+
+  Future<int> updateMedication(String id, Map<String, dynamic> record) async {
+    final db = await database;
+    return await db.update('medications', record, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteMedication(String id) async {
+    final db = await database;
+    return await db.delete('medications', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =========================================================================
+  // WEIGHT LOGS
+  // =========================================================================
+
+  Future<int> insertWeightLog(Map<String, dynamic> log) async {
+    final db = await database;
+    return await db.insert('weight_logs', log);
+  }
+
+  Future<List<Map<String, dynamic>>> getWeightLogsByPet(String petId) async {
+    final db = await database;
+    return await db.query('weight_logs', where: 'petId = ?', whereArgs: [petId],
+        orderBy: 'date DESC');
+  }
+
+  Future<int> updateWeightLog(String id, Map<String, dynamic> log) async {
+    final db = await database;
+    return await db.update('weight_logs', log, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteWeightLog(String id) async {
+    final db = await database;
+    return await db.delete('weight_logs', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =========================================================================
+  // BEHAVIOR LOGS
+  // =========================================================================
+
+  Future<int> insertBehaviorLog(Map<String, dynamic> log) async {
+    final db = await database;
+    return await db.insert('behavior_logs', log);
+  }
+
+  Future<List<Map<String, dynamic>>> getBehaviorLogsByPet(String petId) async {
+    final db = await database;
+    return await db.query('behavior_logs', where: 'petId = ?', whereArgs: [petId],
+        orderBy: 'date DESC');
+  }
+
+  Future<int> deleteBehaviorLog(String id) async {
+    final db = await database;
+    return await db.delete('behavior_logs', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =========================================================================
+  // FAMILY MEMBERS
+  // =========================================================================
+
+  Future<int> insertFamilyMember(Map<String, dynamic> member) async {
+    final db = await database;
+    return await db.insert('family_members', member);
+  }
+
+  Future<List<Map<String, dynamic>>> getFamilyMembersByPet(String petId) async {
+    final db = await database;
+    return await db.query('family_members', where: 'petId = ?', whereArgs: [petId]);
+  }
+
+  Future<int> deleteFamilyMember(String id) async {
+    final db = await database;
+    return await db.delete('family_members', where: 'id = ?', whereArgs: [id]);
   }
 }

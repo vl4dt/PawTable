@@ -55,10 +55,26 @@ class PetLocalModel extends BaseModel {
     );
   }
 
-  /// Convert local model to domain entity
-  dynamic toEntity() {
-    // Import PetEntity at call site to avoid circular dependency
-    throw UnimplementedError('Use PetLocalModel.toEntityAsType()');
+  /// Convert local model to domain entity JSON.
+  ///
+  /// Returns a map that can be passed to [PetEntity.fromJson].
+  /// Conversion is done at the repository layer to avoid circular imports.
+  Map<String, dynamic> toEntityJson() {
+    return {
+      'id': id,
+      'name': name,
+      'species': species,
+      'breed': breed,
+      'photoUri': photoUri,
+      'birthDate': birthDate,
+      'weight': weight,
+      'notes': notes,
+      'isNeutered': isNeutered,
+      'isMicrochipped': isMicrochipped,
+      'microchipId': microchipId,
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+    };
   }
 
   @override
