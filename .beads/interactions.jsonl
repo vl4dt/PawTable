@@ -18,3 +18,4 @@
 {"id":"int-2ecac888","kind":"field_change","created_at":"2026-05-26T09:15:14.7968771Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-d0e.9","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Closed"}}
 {"id":"int-b20768cf","kind":"field_change","created_at":"2026-05-26T09:29:13.486359Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-d0e.10","extra":{"field":"status","new_value":"closed","old_value":"open"}}
 {"id":"int-4b25ee9b","kind":"field_change","created_at":"2026-05-26T09:29:27.5684445Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-d0e.11","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
+{"id":"int-d3ed88b0","kind":"field_change","created_at":"2026-05-26T09:34:32.0856866Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-d0e.11","extra":{"field":"status","new_value":"closed","old_value":"in_progress"}}

@@ -15,6 +15,7 @@ import '../../features/calendar/presentation/views/calendar_view.dart';
 import '../../features/family/presentation/views/family_view.dart';
 import '../../features/premium/presentation/views/premium_view.dart';
 import '../../features/profile/presentation/views/profile_view.dart';
+import '../../features/home/presentation/views/home_dashboard.dart';
 
 // =========================================================================
 // Route Definitions
@@ -354,7 +355,7 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: AppRoutes.home,
           name: 'home',
-          builder: (context, state) => const _HomePlaceholder(),
+          builder: (context, state) => const HomeDashboard(),
           routes: [],
         ),
         // Feed tab
@@ -487,26 +488,6 @@ final GoRouter router = GoRouter(
     ),
   ],
 );
-
-// =========================================================================
-// Placeholder Widgets
-// =========================================================================
-
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'Home Dashboard — coming soon',
-          style: TextStyle(fontSize: 18, color: Colors.grey),
-        ),
-      ),
-    );
-  }
-}
 
 // =========================================================================
 // Navigation Helper Extension
