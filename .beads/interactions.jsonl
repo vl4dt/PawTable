@@ -38,3 +38,12 @@
 {"id":"int-8f91d3df","kind":"field_change","created_at":"2026-05-26T20:13:38.9461886Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-5xa.7","extra":{"field":"status","new_value":"closed","old_value":"open"}}
 {"id":"int-93ea35c6","kind":"field_change","created_at":"2026-05-26T20:13:45.5711215Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-5xa","extra":{"field":"status","new_value":"closed","old_value":"open"}}
 {"id":"int-b92468e9","kind":"field_change","created_at":"2026-05-26T21:35:08.3262355Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.4","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-f24a4805","kind":"field_change","created_at":"2026-05-26T21:56:33.3297491Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.1","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-45f08457","kind":"field_change","created_at":"2026-05-26T21:56:36.2740157Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.2","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-74c28854","kind":"field_change","created_at":"2026-05-26T21:56:36.9046957Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.3","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-dbb0c46e","kind":"field_change","created_at":"2026-05-26T21:56:37.5323107Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.5","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-2f633294","kind":"field_change","created_at":"2026-05-26T21:56:38.1735517Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.6","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-e2bf1169","kind":"field_change","created_at":"2026-05-26T21:56:38.8074977Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.7","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-308273f6","kind":"field_change","created_at":"2026-05-26T21:56:39.4253254Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.8","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-7973047f","kind":"field_change","created_at":"2026-05-26T21:56:40.0409602Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v.9","extra":{"field":"status","new_value":"closed","old_value":"open"}}
+{"id":"int-c62da3c7","kind":"field_change","created_at":"2026-05-26T21:56:45.528551Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-75v","extra":{"field":"status","new_value":"closed","old_value":"open"}}
