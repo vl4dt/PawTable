@@ -6,6 +6,7 @@ import '../theme/colors.dart';
 import '../../shared/providers/app_state_provider.dart';
 import '../../features/pets/presentation/views/pet_list_view.dart';
 import '../../features/pets/presentation/views/pet_detail_view.dart';
+import '../../features/pets/presentation/views/add_pet_view.dart';
 import '../../features/feeding/presentation/views/feeding_view.dart';
 import '../../features/health/presentation/views/health_view.dart';
 import '../../features/vaccinations/presentation/views/vaccination_view.dart';
@@ -50,6 +51,8 @@ class AppRoutes {
   static const String pets = '/pets';
   static const String petDetail = '/pets/:petId';
   static const String petEdit = '/pets/:petId/edit';
+  static const String addPet = '/pets/add';
+  static const String petPhotos = '/pets/:petId/photos';
   static const String feeding = '/feed/:petId';
   static const String health = '/health/:petId';
   static const String vaccinations = '/vaccinations/:petId';
@@ -268,6 +271,13 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const PetListView(),
     ),
 
+    // Add pet
+    GoRoute(
+      path: AppRoutes.addPet,
+      name: 'add-pet',
+      builder: (context, state) => const AddPetView(),
+    ),
+
     // Pet detail
     GoRoute(
       path: AppRoutes.petDetail,
@@ -284,9 +294,11 @@ final GoRouter router = GoRouter(
       name: 'pet-edit',
       builder: (context, state) {
         final petId = state.pathParameters['petId']!;
-        return PetDetailView(petId: petId);
+        return AddPetView(editPetId: petId);
       },
     ),
+
+
 
     // Feeding detail
     GoRoute(
@@ -447,6 +459,16 @@ extension NavigationX on BuildContext {
   /// Navigate to pet list
   void navigateToPets() {
     go(AppRoutes.pets);
+  }
+
+  /// Navigate to add pet
+  void navigateToAddPet() {
+    go(AppRoutes.addPet);
+  }
+
+  /// Navigate to pet photo gallery
+  void navigateToPetPhotos(String petId, {String petName = 'Pet'}) {
+    go('${AppRoutes.petPhotos}?name=$petName', extra: petId);
   }
 
   /// Navigate to onboarding welcome

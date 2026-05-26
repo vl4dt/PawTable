@@ -6,8 +6,8 @@ import '../../../../core/navigation/routes.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../shared/widgets/pet_avatar.dart';
-import '../../../../features/pets/domain/entities/pet_entity.dart';
-import '../../../../features/pets/presentation/providers/pet_provider.dart';
+import '../../../pets/domain/entities/pet_entity.dart';
+import '../../../pets/presentation/providers/pet_provider.dart';
 import '../widgets/home_pet_card.dart';
 import '../widgets/health_at_glance_card.dart';
 import '../widgets/quick_log_row.dart';
@@ -21,11 +21,22 @@ import '../widgets/recent_activity_list.dart';
 /// - Pet cards (if multiple pets, allows switching)
 /// - Health at a glance (upcoming vaccinations, medications due)
 /// - Recent activity feed
-class HomeDashboard extends ConsumerWidget {
+class HomeDashboard extends ConsumerStatefulWidget {
   const HomeDashboard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeDashboard> createState() => _HomeDashboardState();
+}
+
+class _HomeDashboardState extends ConsumerState<HomeDashboard> {
+  int _selectedPetIndex = 0;
+
+  void _onPetSelected(int index) {
+    setState(() => _selectedPetIndex = index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final petsAsync = ref.watch(petListProvider);
     final now = DateTime.now();
 
@@ -34,7 +45,6 @@ class HomeDashboard extends ConsumerWidget {
         if (pets.isEmpty) {
           return const _EmptyDashboard();
         }
-
         return NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
@@ -55,7 +65,11 @@ class HomeDashboard extends ConsumerWidget {
           },
           body: pets.length == 1
               ? _SinglePetBody(pet: pets.first)
-              : _MultiPetBody(pets: pets),
+              : _MultiPetBody(
+                  pets: pets,
+                  selectedIndex: _selectedPetIndex,
+                  onPetSelected: _onPetSelected,
+                ),
         );
       },
       loading: () => const _LoadingDashboard(),
@@ -96,6 +110,17 @@ class HomeDashboard extends ConsumerWidget {
   }
 
   Widget _buildQuickLogRow(BuildContext context, WidgetRef ref) {
+    final petsAsync = ref.watch(petListProvider);
+    final selectedPet = petsAsync.when(
+      data: (pets) {
+        if (pets.isEmpty) return null;
+        if (pets.length == 1) return pets.first;
+        return pets.elementAt(ref.read(_selectedPetIndexProvider));
+      },
+      loading: () => null,
+      error: (_, __) => null,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: QuickLogRow(
@@ -105,16 +130,9 @@ class HomeDashboard extends ConsumerWidget {
             label: 'Feed',
             color: PawTableColors.primary,
             onTap: () {
-              final pets = ref.read(petListProvider);
-              pets.when(
-                data: (pets) {
-                  if (pets.isNotEmpty) {
-                    context.push(AppRoutes.feeding, extra: pets.first.id);
-                  }
-                },
-                loading: () {},
-                error: (_, __) {},
-              );
+              if (selectedPet != null) {
+                context.push(AppRoutes.feeding, extra: selectedPet.id);
+              }
             },
           ),
           QuickLogButton(
@@ -122,16 +140,9 @@ class HomeDashboard extends ConsumerWidget {
             label: 'Meds',
             color: PawTableColors.info,
             onTap: () {
-              final pets = ref.read(petListProvider);
-              pets.when(
-                data: (pets) {
-                  if (pets.isNotEmpty) {
-                    context.push(AppRoutes.medications, extra: pets.first.id);
-                  }
-                },
-                loading: () {},
-                error: (_, __) {},
-              );
+              if (selectedPet != null) {
+                context.push(AppRoutes.medications, extra: selectedPet.id);
+              }
             },
           ),
           QuickLogButton(
@@ -139,16 +150,9 @@ class HomeDashboard extends ConsumerWidget {
             label: 'Weight',
             color: PawTableColors.success,
             onTap: () {
-              final pets = ref.read(petListProvider);
-              pets.when(
-                data: (pets) {
-                  if (pets.isNotEmpty) {
-                    context.push(AppRoutes.tracking, extra: pets.first.id);
-                  }
-                },
-                loading: () {},
-                error: (_, __) {},
-              );
+              if (selectedPet != null) {
+                context.push(AppRoutes.tracking, extra: selectedPet.id);
+              }
             },
           ),
           QuickLogButton(
@@ -156,16 +160,9 @@ class HomeDashboard extends ConsumerWidget {
             label: 'Health',
             color: PawTableColors.error,
             onTap: () {
-              final pets = ref.read(petListProvider);
-              pets.when(
-                data: (pets) {
-                  if (pets.isNotEmpty) {
-                    context.push(AppRoutes.health, extra: pets.first.id);
-                  }
-                },
-                loading: () {},
-                error: (_, __) {},
-              );
+              if (selectedPet != null) {
+                context.push(AppRoutes.health, extra: selectedPet.id);
+              }
             },
           ),
         ],
@@ -198,10 +195,8 @@ class HomeDashboard extends ConsumerWidget {
                 final pet = pets[index];
                 return _PetChip(
                   pet: pet,
-                  isActive: index == 0,
-                  onTap: () {
-                    // Scroll to this pet's section
-                  },
+                  isActive: index == _selectedPetIndex,
+                  onTap: () => _onPetSelected(index),
                 );
               },
             ),
@@ -211,6 +206,9 @@ class HomeDashboard extends ConsumerWidget {
     );
   }
 }
+
+/// Provider to track selected pet index for multi-pet mode
+final _selectedPetIndexProvider = StateProvider<int>((ref) => 0);
 
 /// Header chip for pet selector
 class _PetChip extends StatelessWidget {
@@ -296,10 +294,13 @@ class _EmptyDashboard extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: () {
                   // Navigate to pet creation
-                  context.push(AppRoutes.pets);
+                  context.push(AppRoutes.addPet);
                 },
                 icon: const Icon(Icons.add),
                 label: const Text('Add Your Pet'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PawTableColors.primary,
+                ),
               ),
             ],
           ),
@@ -399,36 +400,40 @@ class _SinglePetBody extends StatelessWidget {
 /// Dashboard body when multiple pets exist
 class _MultiPetBody extends StatelessWidget {
   final List<PetEntity> pets;
-  const _MultiPetBody({required this.pets});
+  final int selectedIndex;
+  final ValueChanged<int> onPetSelected;
+  const _MultiPetBody({
+    required this.pets,
+    required this.selectedIndex,
+    required this.onPetSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final selectedPet = pets[selectedIndex];
+
     return CustomScrollView(
       slivers: [
-        // Pet cards for each pet
-        ...pets.map(
-          (pet) => SliverToBoxAdapter(
-            child: Column(
-              children: [
-                HomePetCard(
-                  pet: pet,
-                  onTap: () {
-                    context.push(AppRoutes.petDetail, extra: pet.id);
-                  },
-                ),
-                const SizedBox(height: 16),
-                HealthAtGlanceCard(
-                  petId: pet.id,
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
+        // Selected pet card
+        SliverToBoxAdapter(
+          child: HomePetCard(
+            pet: selectedPet,
+            onTap: () {
+              context.push(AppRoutes.petDetail, extra: selectedPet.id);
+            },
           ),
         ),
-        // Recent activity (aggregated)
+        // Health at a glance
+        SliverToBoxAdapter(
+          child: HealthAtGlanceCard(
+            petId: selectedPet.id,
+          ),
+        ),
+        // Recent activity
         const SliverToBoxAdapter(
           child: RecentActivityList(),
         ),
+        // Bottom padding
         const SliverToBoxAdapter(
           child: SizedBox(height: 80),
         ),

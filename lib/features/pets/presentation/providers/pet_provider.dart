@@ -2,13 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../pets/domain/entities/pet_entity.dart';
 import '../../../pets/domain/repositories/pet_repository.dart';
+import '../../../../di/providers.dart';
 
-/// Provider for PetRepository (injected from DI)
-final petRepositoryProvider = Provider<PetRepository>((ref) {
-  // TODO: wire up with Injectable / GetIt
-  // For now, return a placeholder that will be overridden
-  throw UnimplementedError('PetRepository not configured');
-});
+// Note: petRepositoryProvider is defined in lib/di/providers.dart
+// using GetIt for DI. Do not redefine here.
 
 /// State for pet list operations
 class PetListState {
@@ -16,12 +13,14 @@ class PetListState {
   final bool isLoading;
   final String? error;
   final String? searchQuery;
+  final bool hasReachedMax;
 
   const PetListState({
     this.pets = const [],
     this.isLoading = false,
     this.error,
     this.searchQuery,
+    this.hasReachedMax = true,
   });
 
   PetListState copyWith({
@@ -29,12 +28,14 @@ class PetListState {
     bool? isLoading,
     String? error,
     String? searchQuery,
+    bool? hasReachedMax,
   }) {
     return PetListState(
       pets: pets ?? this.pets,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       searchQuery: searchQuery ?? this.searchQuery,
+      hasReachedMax: hasReachedMax ?? this.hasReachedMax,
     );
   }
 }
@@ -45,7 +46,7 @@ class PetListNotifier extends AsyncNotifier<List<PetEntity>> {
 
   @override
   Future<List<PetEntity>> build() {
-    _repository = ref.read(petRepositoryProvider);
+    _repository = ref.watch(petRepositoryProvider);
     return Future.value(const []);
   }
 
