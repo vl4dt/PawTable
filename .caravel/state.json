@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "timestamp": 1779778740274,
+  "state": {
+    "phases": [],
+    "currentPhaseIndex": 0,
+    "activeAgents": [],
+    "paused": false,
+    "startTime": 1779778344165,
+    "reviewIterations": 0,
+    "maxReviewIterations": 5,
+    "recentOutput": "",
+    "totalFleetTokens": 0,
+    "mainAgentActivity": {
+      "status": "idle",
+      "action": "response",
+      "detail": "## Monetization Strategy Research Com\u001b0m...\u001b0m",
+      "timestamp": 1779778740272
+    }
+  }
+}
