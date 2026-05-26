@@ -1,0 +1,209 @@
+name: PawTable CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # =====================================================================
+  # JOB 1: Static Analysis & Linting
+  # =====================================================================
+  analyze:
+    name: "Analyze on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        flutter-version: ["3.27.0"]
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Flutter ${{ matrix.flutter-version }}"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "${{ matrix.flutter-version }}"
+          channel: "stable"
+          cache: true
+
+      - name: "Install Dependencies"
+        run: flutter pub get
+
+      - name: "Format Check"
+        run: dart format --set-exit-if-changed .
+
+      - name: "Analyze"
+        run: flutter analyze --no-fatal-infos
+
+      - name: "Upgrade Dependencies"
+        run: flutter pub upgrade --dry-run
+
+  # =====================================================================
+  # JOB 2: Unit & Widget Tests
+  # =====================================================================
+  test:
+    name: "Test on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        flutter-version: ["3.27.0"]
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Flutter ${{ matrix.flutter-version }}"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "${{ matrix.flutter-version }}"
+          channel: "stable"
+          cache: true
+
+      - name: "Install Dependencies"
+        run: flutter pub get
+
+      - name: "Run Tests"
+        run: flutter test --coverage --reporter github
+
+      - name: "Upload Coverage"
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_if_ci_error: false
+
+  # =====================================================================
+  # JOB 3: Build Validation (Android)
+  # =====================================================================
+  build-android:
+    name: "Build Android APK"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Flutter"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.0"
+          channel: "stable"
+          cache: true
+
+      - name: "Setup Java"
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: "Install Dependencies"
+        run: flutter pub get
+
+      - name: "Build APK"
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: "Upload APK"
+        uses: actions/upload-artifact@v4
+        with:
+          name: pawtable-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
+
+  # =====================================================================
+  # JOB 4: Build Validation (iOS) - macOS runner
+  # =====================================================================
+  build-ios:
+    name: "Build iOS IPA"
+    runs-on: macos-latest
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Flutter"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.0"
+          channel: "stable"
+          cache: true
+
+      - name: "Install Dependencies"
+        run: flutter pub get
+
+      - name: "Build iOS"
+        run: flutter build ios --release --no-codesign
+
+      - name: "Upload IPA"
+        uses: actions/upload-artifact@v4
+        with:
+          name: pawtable-release-ios
+          path: build/ios/iphoneos/
+          retention-days: 30
+
+  # =====================================================================
+  # JOB 5: Web Build Validation
+  # =====================================================================
+  build-web:
+    name: "Build Web App"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Flutter"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.27.0"
+          channel: "stable"
+          cache: true
+
+      - name: "Install Dependencies"
+        run: flutter pub get
+
+      - name: "Build Web"
+        run: flutter build web --release
+
+      - name: "Upload Web Assets"
+        uses: actions/upload-artifact@v4
+        with:
+          name: pawtable-web-build
+          path: build/web/
+          retention-days: 30
+
+  # =====================================================================
+  # JOB 6: Multi-version Testing
+  # =====================================================================
+  test-matrix:
+    name: "Test on Flutter ${{ matrix.flutter-version }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        flutter-version: ["3.27.0", "3.29.0"]
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Flutter ${{ matrix.flutter-version }}"
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "${{ matrix.flutter-version }}"
+          channel: "stable"
+          cache: true
+
+      - name: "Install Dependencies"
+        run: flutter pub get
+
+      - name: "Run Tests"
+        run: flutter test --reporter github
+
+      - name: "Analyze"
+        run: flutter analyze --no-fatal-infos
