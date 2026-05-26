@@ -15,6 +15,7 @@ import '../../features/calendar/presentation/views/calendar_view.dart';
 import '../../features/family/presentation/views/family_view.dart';
 import '../../features/premium/presentation/views/premium_view.dart';
 import '../../features/profile/presentation/views/profile_view.dart';
+import '../../features/settings/presentation/views/settings_view.dart';
 import '../../features/home/presentation/views/home_dashboard.dart';
 import '../../features/onboarding/presentation/views/onboarding_view.dart';
 
@@ -351,11 +352,11 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const ProfileView(),
     ),
 
-    // Settings (alias to profile)
+    // Settings
     GoRoute(
       path: AppRoutes.settings,
       name: 'settings',
-      builder: (context, state) => const ProfileView(),
+      builder: (context, state) => const SettingsView(),
     ),
   ],
 );
