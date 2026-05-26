@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "timestamp": 1779781427771,
+  "timestamp": 1779782287907,
   "state": {
     "phases": [],
     "currentPhaseIndex": 0,
@@ -13,9 +13,9 @@
     "totalFleetTokens": 0,
     "mainAgentActivity": {
       "status": "idle",
-      "action": "response",
-      "detail": "## ✅ Task 5/50 Complete — go_router \u001b0m...\u001b0m",
-      "timestamp": 1779781427769
+      "action": "idle",
+      "detail": "Turn complete",
+      "timestamp": 1779782287905
     }
   }
 }
