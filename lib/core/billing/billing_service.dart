@@ -9,9 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// - Family Monthly: $9.99/mo (offerId: family-monthly)
 /// - Family Annual: $79.99/yr (offerId: family-annual)
 class BillingService {
-  final Ref ref;
+  BillingService([this.ref]);
 
-  BillingService(this.ref);
+  final Ref? ref;
 
   /// Check if user has active premium subscription
   Future<bool> hasPremium() async {

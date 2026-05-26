@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/themes.dart';
 import 'core/navigation/routes.dart';
+import 'shared/providers/app_state_provider.dart';
+import 'shared/widgets/app_initializer.dart';
 
 /// PawTable — Your Pet, At Your Table
 ///
@@ -18,7 +20,7 @@ void main() async {
   // await Firebase.initializeApp();
 
   runApp(
-    const ProviderScope(
+    ProviderScope(
       child: PawTableApp(),
     ),
   );
@@ -29,13 +31,25 @@ class PawTableApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'PawTable',
-      debugShowCheckedModeBanner: false,
-      theme: PawThemes.lightTheme,
-      darkTheme: PawThemes.darkTheme,
-      themeMode: ThemeMode.system, // Let system preference decide
-      routerConfig: router,
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeMode = ref.watch(themeModeProvider);
+
+        return MaterialApp.router(
+          title: 'PawTable',
+          debugShowCheckedModeBanner: false,
+          theme: PawThemes.lightTheme,
+          darkTheme: PawThemes.darkTheme,
+          themeMode: themeMode,
+          routerConfig: router,
+          builder: (context, child) {
+            if (child != null) {
+              return AppInitializer(child: child);
+            }
+            return child!;
+          },
+        );
+      },
     );
   }
 }

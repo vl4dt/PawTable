@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/storage/storage_service.dart';
 import '../core/storage/database_helper.dart';
 import '../core/billing/billing_service.dart';
+import '../features/pets/domain/repositories/pet_repository.dart';
+import '../features/pets/presentation/providers/pet_provider.dart';
+import 'app_module.dart';
 
 /// Dependency injection providers
 ///
@@ -10,25 +13,29 @@ import '../core/billing/billing_service.dart';
 
 // Storage
 final storageServiceProvider = Provider<StorageService>((ref) {
-  return StorageService();
+  return getIt<StorageService>();
 });
 
 final databaseServiceProvider = Provider<DatabaseHelper>((ref) {
-  return DatabaseHelper();
+  return getIt<DatabaseHelper>();
 });
 
 // Billing
 final billingServiceProvider = Provider<BillingService>((ref) {
-  return BillingService(ref);
+  return getIt<BillingService>();
+});
+
+// Pet repository
+final petRepositoryProvider = Provider<PetRepository>((ref) {
+  return getIt<PetRepository>();
 });
 
 /// Async provider that initializes all services on app start
 final initializationProvider = FutureProvider<void>((ref) async {
+  configureDependencies('dev');
+
   final storageService = ref.read(storageServiceProvider);
   await storageService.init();
-
-  // Firebase initialization will happen later
-  // when Firebase is configured
 
   return;
 });
@@ -39,4 +46,6 @@ final appServiceProvider = Provider<void>((ref) {
   ref.watch(storageServiceProvider);
   ref.watch(databaseServiceProvider);
   ref.watch(billingServiceProvider);
+  ref.watch(petRepositoryProvider);
+  ref.watch(petListProvider);
 });
