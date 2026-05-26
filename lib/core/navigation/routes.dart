@@ -151,7 +151,7 @@ class _PawTableShell extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: onTabSelected,
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: PawTableColors.softOrange,
+        selectedItemColor: PawTableColors.primary,
         unselectedItemColor: theme.colorScheme.onSurface.withValues(alpha: 0.5),
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
         items: AppRoutes.tabLabels.asMap().entries.map((entry) {
@@ -184,7 +184,7 @@ class _OnboardingWelcome extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.pets, size: 80, color: PawTableColors.softOrange),
+              Icon(Icons.pets, size: 80, color: PawTableColors.primary),
               const SizedBox(height: 24),
               Text(
                 'Welcome to PawTable',
@@ -195,7 +195,7 @@ class _OnboardingWelcome extends StatelessWidget {
               Text(
                 'Your Pet, At Your Table',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: PawTableColors.warmCoral,
+                  color: PawTableColors.primaryDark,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -263,7 +263,7 @@ class _OnboardingComplete extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.check_circle, size: 80, color: PawTableColors.sageGreen),
+              Icon(Icons.check_circle, size: 80, color: PawTableColors.success),
               const SizedBox(height: 24),
               Text(
                 "You're All Set!",

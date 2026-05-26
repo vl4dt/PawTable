@@ -1,4 +1,4 @@
-/// Base repository interface for clean architecture
+/// PawTable base repository interfaces.
 ///
 /// Repositories define the contract between domain and data layers.
 /// Domain layer depends on these interfaces; data layer implements them.
@@ -16,6 +16,7 @@
 ///   // Implementation using Hive + SQLite + Firebase
 /// }
 /// ```
+library;
 
 abstract class BaseRepository {
   /// Check if repository operations are currently syncing
