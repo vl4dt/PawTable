@@ -55,7 +55,7 @@ class QuickActionRow extends StatelessWidget {
         itemCount: buttons.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          return Expanded(child: buttons[index]);
+          return buttons[index];
         },
       ),
     );
