@@ -100,3 +100,28 @@ final petListProvider = AsyncNotifierProvider<PetListNotifier, List<PetEntity>>(
 final petIdProvider = Provider<String>((ref) {
   return const Uuid().v4();
 });
+
+/// Shared pet selection state
+class PetSelectionState {
+  final String? selectedPetId;
+
+  const PetSelectionState({this.selectedPetId});
+
+  PetSelectionState copyWith({String? selectedPetId}) => PetSelectionState(
+        selectedPetId: selectedPetId ?? this.selectedPetId,
+      );
+}
+
+/// Provider for selected pet ID (shared across views)
+class PetSelectionNotifier extends StateNotifier<PetSelectionState> {
+  PetSelectionNotifier() : super(const PetSelectionState());
+
+  void selectPet(String? petId) {
+    state = state.copyWith(selectedPetId: petId);
+  }
+}
+
+final petSelectionProvider =
+    StateNotifierProvider<PetSelectionNotifier, PetSelectionState>(
+  (ref) => PetSelectionNotifier(),
+);
