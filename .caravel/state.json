@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "timestamp": 1779782476869,
+  "timestamp": 1779786450907,
   "state": {
     "phases": [],
     "currentPhaseIndex": 0,
@@ -13,9 +13,9 @@
     "totalFleetTokens": 0,
     "mainAgentActivity": {
       "status": "idle",
-      "action": "response",
-      "detail": "**Task 7 (PawTable-d0e.12) — Create s\u001b0m...\u001b0m",
-      "timestamp": 1779782476868
+      "action": "idle",
+      "detail": "Turn complete",
+      "timestamp": 1779786450905
     }
   }
 }
