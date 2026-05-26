@@ -63,6 +63,9 @@ dependencies:
   # Logging
   logger: ^2.5.0
 
+  # Crash reporting
+  sentry_flutter: ^8.14.0
+
   # Code generation annotations
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
