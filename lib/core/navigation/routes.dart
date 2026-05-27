@@ -14,6 +14,7 @@ import '../../features/medications/presentation/views/medication_view.dart';
 import '../../features/tracking/presentation/views/tracking_view.dart';
 import '../../features/calendar/presentation/views/calendar_view.dart';
 import '../../features/family/presentation/views/family_view.dart';
+import '../../features/family/presentation/views/activity_feed_view.dart';
 import '../../features/premium/presentation/views/premium_view.dart';
 import '../../features/profile/presentation/views/profile_view.dart';
 import '../../features/settings/presentation/views/settings_view.dart';
@@ -48,6 +49,7 @@ class AppRoutes {
   static const String track = '/track';
   static const String calendar = '/calendar';
   static const String family = '/family';
+  static const String familyActivityFeed = '/family/:groupId/activity';
 
   // Full-screen / detail paths
   static const String pets = '/pets';
@@ -267,6 +269,16 @@ final GoRouter router = GoRouter(
     // =========================================================================
     // Full-Screen Routes
     // =========================================================================
+
+    // Family Activity Feed
+    GoRoute(
+      path: AppRoutes.familyActivityFeed,
+      name: 'family-activity-feed',
+      builder: (context, state) {
+        final groupId = state.pathParameters['groupId']!;
+        return ActivityFeedView(groupId: groupId);
+      },
+    ),
 
     // Pet list
     GoRoute(

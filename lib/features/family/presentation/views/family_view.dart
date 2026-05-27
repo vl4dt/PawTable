@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/errors/app_exception.dart';
+import '../../../../core/navigation/routes.dart';
+import '../../domain/entities/activity_feed_entity.dart';
 import '../../domain/entities/family_group_entity.dart';
 import '../../domain/services/family_permission_service.dart';
+import '../providers/activity_feed_provider.dart';
 import '../providers/family_provider.dart';
 
 /// Family view — group creation, member management, pet sharing
@@ -37,10 +40,20 @@ class _FamilyViewState extends ConsumerState<FamilyView> {
         elevation: 0,
         actions: [
           if (state.selectedGroup != null)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _showAddMemberDialog(context),
-              tooltip: 'Add Member',
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.timeline_rounded),
+                  onPressed: () => _navigateToActivityFeed(context),
+                  tooltip: 'Activity Feed',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () => _showAddMemberDialog(context),
+                  tooltip: 'Add Member',
+                ),
+              ],
             ),
         ],
       ),
@@ -65,6 +78,47 @@ class _FamilyViewState extends ConsumerState<FamilyView> {
                 )
               : null,
     );
+  }
+
+  /// Navigate to the activity feed for the selected group
+  void _navigateToActivityFeed(BuildContext context) {
+    final groupId = ref.read(familyListProvider).selectedGroup?.id;
+    if (groupId != null && context.mounted) {
+      Navigator.of(context).pushNamed(
+        AppRoutes.familyActivityFeed,
+        arguments: {'groupId': groupId},
+      );
+    }
+  }
+
+  /// Create an activity entry for a family action
+  Future<void> _createActivityEntry({
+    required String groupId,
+    required String userId,
+    required String userName,
+    required String petId,
+    required String petName,
+    required ActivityFeedType type,
+    required String title,
+    String description = '',
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      await ref.read(activityFeedProvider.notifier).addEntry(
+            groupId: groupId,
+            userId: userId,
+            userName: userName,
+            petId: petId,
+            petName: petName,
+            type: type,
+            title: title,
+            description: description,
+            metadata: metadata,
+          );
+    } catch (e) {
+      // Log error but don't fail the action
+      debugPrint('Failed to create activity entry: $e');
+    }
   }
 
   void _showCreateGroupDialog(BuildContext context) {
@@ -94,6 +148,23 @@ class _FamilyViewState extends ConsumerState<FamilyView> {
                   .read(familyListProvider.notifier)
                   .createGroup(name);
               if (success && mounted) {
+                // Create activity entry for group creation
+                final selectedGroup = ProviderScope.containerOf(ctx, listen: false)
+                    .read(familyListProvider)
+                    .selectedGroup;
+                if (selectedGroup != null) {
+                  await _createActivityEntry(
+                    groupId: selectedGroup.id,
+                    userId: 'user-current',
+                    userName: 'You',
+                    petId: '',
+                    petName: '',
+                    type: ActivityFeedType.groupCreated,
+                    title: 'Group Created',
+                    description: '$name has been created',
+                  );
+                }
+
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -153,6 +224,23 @@ class _FamilyViewState extends ConsumerState<FamilyView> {
                   .read(familyListProvider.notifier)
                   .addMember(userId: userId, displayName: name);
               if (success && mounted) {
+                // Create activity entry for member added
+                final selectedGroup = ProviderScope.containerOf(ctx, listen: false)
+                    .read(familyListProvider)
+                    .selectedGroup;
+                if (selectedGroup != null) {
+                  await _createActivityEntry(
+                    groupId: selectedGroup.id,
+                    userId: userId,
+                    userName: name,
+                    petId: '',
+                    petName: '',
+                    type: ActivityFeedType.memberJoined,
+                    title: 'Member Joined',
+                    description: '$name has joined the family',
+                  );
+                }
+
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -831,16 +919,38 @@ class _SharedPetsSection extends ConsumerWidget {
                       IconButton(
                         icon: const Icon(Icons.link_off, size: 20),
                         onPressed: () async {
-                          final success = await ProviderScope.containerOf(context, listen: false)
-                              .read(familyListProvider.notifier)
-                              .unsharePet(petId);
-                          if (success && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Pet unshared from family'),
-                                backgroundColor: PawTableColors.warning,
-                              ),
-                            );
+                          try {
+                            final success = await ProviderScope.containerOf(context, listen: false)
+                                .read(familyListProvider.notifier)
+                                .unsharePet(petId);
+                            if (success && context.mounted) {
+                              // Create activity entry for pet unshared
+                              await ref.read(activityFeedProvider.notifier).addEntry(
+                                    groupId: group.id,
+                                    userId: 'user-current',
+                                    userName: 'You',
+                                    petId: petId,
+                                    petName: 'Pet',
+                                    type: ActivityFeedType.petUnshared,
+                                    title: 'Pet Unshared',
+                                    description: 'Pet #$petId was unshared from the family',
+                                  );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Pet unshared from family'),
+                                  backgroundColor: PawTableColors.warning,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.toString()),
+                                  backgroundColor: PawTableColors.error,
+                                ),
+                              );
+                            }
                           }
                         },
                       ),

@@ -238,6 +238,35 @@ class DatabaseHelper {
         'CREATE INDEX idx_invite_token_code ON invite_tokens(code)');
     await db.execute(
         'CREATE INDEX idx_invite_token_group ON invite_tokens(groupId)');
+
+    // Activity feed — unified activity log for family groups
+    await db.execute('''
+      CREATE TABLE activity_feed (
+        id TEXT PRIMARY KEY,
+        groupId TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        userName TEXT NOT NULL,
+        petId TEXT NOT NULL,
+        petName TEXT NOT NULL,
+        type TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT '',
+        description TEXT NOT NULL DEFAULT '',
+        metadata TEXT DEFAULT '{}',
+        timestamp TEXT NOT NULL,
+        FOREIGN KEY (groupId) REFERENCES family_groups(id),
+        FOREIGN KEY (userId) REFERENCES family_members(userId)
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_activity_feed_group ON activity_feed(groupId)');
+    await db.execute(
+        'CREATE INDEX idx_activity_feed_user ON activity_feed(userId)');
+    await db.execute(
+        'CREATE INDEX idx_activity_feed_pet ON activity_feed(petId)');
+    await db.execute(
+        'CREATE INDEX idx_activity_feed_type ON activity_feed(type)');
+    await db.execute(
+        'CREATE INDEX idx_activity_feed_timestamp ON activity_feed(timestamp DESC)');
   }
 
   Future<void> close() async {
@@ -667,5 +696,194 @@ class DatabaseHelper {
         {'status': 'expired'},
         where: "status = 'active' AND expiresAt < ?",
         whereArgs: [now]);
+  }
+
+  // =========================================================================
+  // ACTIVITY FEED
+  // =========================================================================
+
+  Future<int> insertActivityFeed(Map<String, dynamic> activity) async {
+    final db = await database;
+    return await db.insert('activity_feed', activity);
+  }
+
+  Future<int> insertActivitiesFeedBatch(List<Map<String, dynamic>> activities) async {
+    final db = await database;
+    final batch = db.batch();
+    for (final activity in activities) {
+      batch.insert('activity_feed', activity);
+    }
+    final results = await batch.commit();
+    return results.length;
+  }
+
+  Future<List<Map<String, dynamic>>> getActivityFeedByGroup(
+    String groupId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final db = await database;
+    return await db.query(
+      'activity_feed',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      orderBy: 'timestamp DESC',
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getActivityFeedByUser(
+    String groupId,
+    String userId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final db = await database;
+    return await db.query(
+      'activity_feed',
+      where: 'groupId = ? AND userId = ?',
+      whereArgs: [groupId, userId],
+      orderBy: 'timestamp DESC',
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getActivityFeedByPet(
+    String groupId,
+    String petId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final db = await database;
+    return await db.query(
+      'activity_feed',
+      where: 'groupId = ? AND petId = ?',
+      whereArgs: [groupId, petId],
+      orderBy: 'timestamp DESC',
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  Future<int> getActivityFeedCount(String groupId) async {
+    final db = await database;
+    final results = await db.query(
+      'activity_feed',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      columns: ['COUNT(*) as count'],
+    );
+    return results.isNotEmpty
+        ? (results.first['count'] as int)
+        : 0;
+  }
+
+  Future<int> getActivityFeedCountByType(
+    String groupId, String type) async {
+    final db = await database;
+    final results = await db.query(
+      'activity_feed',
+      where: 'groupId = ? AND type = ?',
+      whereArgs: [groupId, type],
+      columns: ['COUNT(*) as count'],
+    );
+    return results.isNotEmpty
+        ? (results.first['count'] as int)
+        : 0;
+  }
+
+  Future<int> deleteActivityFeedEntry(String id) async {
+    final db = await database;
+    return await db.delete(
+      'activity_feed',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteActivityFeedByGroup(String groupId) async {
+    final db = await database;
+    return await db.delete(
+      'activity_feed',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+    );
+  }
+
+  /// Get today's activity count for a group
+  Future<int> getTodayActivityCount(String groupId) async {
+    final db = await database;
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day).toIso8601String();
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+    return await db.query(
+      'activity_feed',
+      where: 'groupId = ? AND timestamp >= ? AND timestamp <= ?',
+      whereArgs: [groupId, startOfDay, endOfDay],
+      columns: ['COUNT(*) as count'],
+    ).then((results) => results.isNotEmpty
+        ? (results.first['count'] as int)
+        : 0);
+  }
+
+  /// Get this week's activity count for a group
+  Future<int> getWeekActivityCount(String groupId) async {
+    final db = await database;
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final start = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day).toIso8601String();
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+    return await db.query(
+      'activity_feed',
+      where: 'groupId = ? AND timestamp >= ? AND timestamp <= ?',
+      whereArgs: [groupId, start, end],
+      columns: ['COUNT(*) as count'],
+    ).then((results) => results.isNotEmpty
+        ? (results.first['count'] as int)
+        : 0);
+  }
+
+  /// Get this month's activity count for a group
+  Future<int> getMonthActivityCount(String groupId) async {
+    final db = await database;
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, 1).toIso8601String();
+    final end = DateTime(now.year, now.month, now.day, 23, 59, 59).toIso8601String();
+    return await db.query(
+      'activity_feed',
+      where: 'groupId = ? AND timestamp >= ? AND timestamp <= ?',
+      whereArgs: [groupId, start, end],
+      columns: ['COUNT(*) as count'],
+    ).then((results) => results.isNotEmpty
+        ? (results.first['count'] as int)
+        : 0);
+  }
+
+  /// Get unique active user IDs for a group
+  Future<List<String>> getActiveUserIds(String groupId) async {
+    final db = await database;
+    final results = await db.query(
+      'activity_feed',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      columns: ['DISTINCT userId'],
+      orderBy: 'MAX(timestamp) DESC',
+    );
+    return results.map((row) => row['userId'] as String).toList();
+  }
+
+  /// Get unique active pet IDs for a group
+  Future<List<String>> getActivePetIds(String groupId) async {
+    final db = await database;
+    final results = await db.query(
+      'activity_feed',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      columns: ['DISTINCT petId'],
+      orderBy: 'MAX(timestamp) DESC',
+    );
+    return results.map((row) => row['petId'] as String).toList();
   }
 }
