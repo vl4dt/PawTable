@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "timestamp": 1779851952107,
+  "timestamp": 1779852590664,
   "state": {
     "phases": [],
     "currentPhaseIndex": 0,
@@ -15,7 +15,7 @@
       "status": "idle",
       "action": "idle",
       "detail": "Turn complete",
-      "timestamp": 1779851952105
+      "timestamp": 1779852590663
     }
   }
 }

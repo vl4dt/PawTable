@@ -22,6 +22,8 @@ import '../features/family/domain/repositories/invite_repository.dart';
 import '../features/family/domain/repositories/activity_feed_repository.dart';
 import '../features/pets/data/repositories/shared_pet_profile_repository_impl.dart';
 import '../features/pets/domain/repositories/shared_pet_profile_repository.dart';
+import '../features/pets/data/repositories/pet_sitter_access_repository_impl.dart';
+import '../features/pets/domain/repositories/pet_sitter_access_repository.dart';
 
 /// GetIt instance for dependency injection
 final getIt = GetIt.instance;
@@ -96,6 +98,11 @@ void configureDependencies(String env) {
     )
     ..registerFactory<SharedPetProfileRepository>(
       () => SharedPetProfileRepositoryImpl(
+        dbHelper: getIt<DatabaseHelper>(),
+      ),
+    )
+    ..registerFactory<PetSitterAccessRepository>(
+      () => PetSitterAccessRepositoryImpl(
         dbHelper: getIt<DatabaseHelper>(),
       ),
     );

@@ -289,6 +289,33 @@ class DatabaseHelper {
         'CREATE INDEX idx_shared_pet_group ON shared_pet_profiles(groupId)');
     await db.execute(
         'CREATE INDEX idx_shared_pet_unique ON shared_pet_profiles(petId, groupId)');
+
+    // Pet sitter access — time-limited access grants for sitters
+    await db.execute('''
+      CREATE TABLE pet_sitter_access (
+        id TEXT PRIMARY KEY,
+        petId TEXT NOT NULL,
+        groupId TEXT NOT NULL,
+        petSitterName TEXT NOT NULL,
+        petSitterPhone TEXT,
+        petSitterEmail TEXT,
+        grantedBy TEXT NOT NULL,
+        grantedByName TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        expiresAt TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (petId) REFERENCES pets(id),
+        FOREIGN KEY (groupId) REFERENCES family_groups(id)
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_petsitter_pet ON pet_sitter_access(petId)');
+    await db.execute(
+        'CREATE INDEX idx_petsitter_group ON pet_sitter_access(groupId)');
+    await db.execute(
+        'CREATE INDEX idx_petsitter_status ON pet_sitter_access(status)');
+    await db.execute(
+        'CREATE INDEX idx_petsitter_expires ON pet_sitter_access(expiresAt)');
   }
 
   Future<void> close() async {
@@ -1004,5 +1031,110 @@ class DatabaseHelper {
     return results.isNotEmpty && (results.first['count'] as int) > 0
         ? 1
         : 0;
+  }
+
+  // =========================================================================
+  // PET SITTER ACCESS
+  // =========================================================================
+
+  Future<int> insertPetSitterAccess(Map<String, dynamic> access) async {
+    final db = await database;
+    return await db.insert('pet_sitter_access', access);
+  }
+
+  Future<List<Map<String, dynamic>>> getActiveSitterAccess(
+    String petId,
+  ) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    return await db.query(
+      'pet_sitter_access',
+      where: 'petId = ? AND status = ? AND expiresAt > ?',
+      whereArgs: [petId, 'active', now],
+      orderBy: 'expiresAt ASC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getActiveSitterAccessByGroup(
+    String groupId,
+  ) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    return await db.query(
+      'pet_sitter_access',
+      where: 'groupId = ? AND status = ? AND expiresAt > ?',
+      whereArgs: [groupId, 'active', now],
+      orderBy: 'expiresAt ASC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllSitterAccess(
+    String groupId,
+  ) async {
+    final db = await database;
+    return await db.query(
+      'pet_sitter_access',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      orderBy: 'createdAt DESC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getSitterAccess(String id) async {
+    final db = await database;
+    final results = await db.query(
+      'pet_sitter_access',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<int> updateSitterAccess(
+    String id,
+    Map<String, dynamic> access,
+  ) async {
+    final db = await database;
+    return await db.update(
+      'pet_sitter_access',
+      access,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteSitterAccess(String id) async {
+    final db = await database;
+    return await db.delete(
+      'pet_sitter_access',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> getActiveSitterCount(String petId) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    final results = await db.query(
+      'pet_sitter_access',
+      where: 'petId = ? AND status = ? AND expiresAt > ?',
+      whereArgs: [petId, 'active', now],
+      columns: ['COUNT(*) as count'],
+    );
+    return results.isNotEmpty && (results.first['count'] as int) > 0
+        ? 1
+        : 0;
+  }
+
+  /// Expire all access for a pet that has passed its expiry
+  Future<int> expireExpiredAccess() async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    return await db.update(
+      'pet_sitter_access',
+      {'status': 'expired'},
+      where: "status = 'active' AND expiresAt <= ?",
+      whereArgs: [now],
+    );
   }
 }
