@@ -20,6 +20,7 @@ import '../../features/settings/presentation/views/settings_view.dart';
 import '../../features/home/presentation/views/home_dashboard.dart';
 import '../../features/onboarding/presentation/views/onboarding_view.dart';
 import '../../features/gamification/presentation/views/streak_view.dart';
+import '../../features/gamification/presentation/views/milestone_view.dart';
 
 // =========================================================================
 // Route Definitions
@@ -60,6 +61,7 @@ class AppRoutes {
   static const String medications = '/medications/:petId';
   static const String tracking = '/tracking/:petId';
   static const String streaks = '/streaks';
+  static const String milestones = '/milestones';
   static const String settings = '/settings';
   static const String premium = '/premium';
   static const String profile = '/profile';
@@ -362,6 +364,16 @@ final GoRouter router = GoRouter(
       },
     ),
 
+    // Milestones / achievements
+    GoRoute(
+      path: AppRoutes.milestones,
+      name: 'milestones',
+      builder: (context, state) {
+        final petId = state.uri.queryParameters['petId'] ?? 'default';
+        return MilestoneView(petId: petId);
+      },
+    ),
+
     // Premium / upgrade
     GoRoute(
       path: AppRoutes.premium,
@@ -401,6 +413,11 @@ extension NavigationX on BuildContext {
   /// Navigate to streaks page
   void navigateToStreaks(String petId) {
     go('${AppRoutes.streaks}?petId=$petId', extra: petId);
+  }
+
+  /// Navigate to milestones/achievements page
+  void navigateToMilestones(String petId) {
+    go('${AppRoutes.milestones}?petId=$petId', extra: petId);
   }
 
   /// Navigate to pet detail page

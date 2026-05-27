@@ -12,6 +12,7 @@ import '../../../pets/presentation/providers/pet_provider.dart';
 import '../widgets/home_pet_card.dart';
 import '../widgets/health_at_glance_card.dart';
 import '../../../gamification/presentation/providers/streak_provider.dart';
+import '../../../gamification/presentation/providers/milestone_provider.dart';
 import '../widgets/quick_log_row.dart';
 import '../widgets/recent_activity_list.dart';
 
@@ -402,6 +403,12 @@ class _SinglePetBody extends StatelessWidget {
             petId: pet.id,
           ),
         ),
+        // Milestones preview card
+        SliverToBoxAdapter(
+          child: _MilestonesPreviewCard(
+            petId: pet.id,
+          ),
+        ),
         // Recent activity
         const SliverToBoxAdapter(
           child: RecentActivityList(),
@@ -450,6 +457,12 @@ class _MultiPetBody extends StatelessWidget {
         // Streaks preview card
         SliverToBoxAdapter(
           child: _StreaksPreviewCard(
+            petId: selectedPet.id,
+          ),
+        ),
+        // Milestones preview card
+        SliverToBoxAdapter(
+          child: _MilestonesPreviewCard(
             petId: selectedPet.id,
           ),
         ),
@@ -568,6 +581,119 @@ class _StreaksPreviewCard extends ConsumerWidget {
 /// Skeleton for streaks preview card
 class _StreaksPreviewSkeleton extends StatelessWidget {
   const _StreaksPreviewSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: PawTokens.md, vertical: 4),
+      decoration: BoxDecoration(
+        color: PawTableColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(PawTokens.radiusLg),
+      ),
+      height: 72,
+    );
+  }
+}
+
+/// Milestones preview card on the home dashboard
+///
+/// Shows unlocked milestone count and a "View Milestones" button.
+class _MilestonesPreviewCard extends ConsumerWidget {
+  final String petId;
+  const _MilestonesPreviewCard({required this.petId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(milestoneProvider);
+
+    // Auto-load milestone data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (state.summary == null && state.error == null) {
+        ref.read(milestoneProvider.notifier).loadMilestones(petId);
+      }
+    });
+
+    if (state.isLoading) {
+      return _MilestonesPreviewSkeleton();
+    }
+
+    final summary = state.summary;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: PawTokens.md, vertical: 4),
+      decoration: BoxDecoration(
+        color: PawTableColors.premiumDark.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(PawTokens.radiusLg),
+        border: Border.all(
+          color: PawTableColors.premiumDark.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(PawTokens.radiusLg),
+          onTap: () => context.navigateToMilestones(petId),
+          child: Padding(
+            padding: const EdgeInsets.all(PawTokens.md),
+            child: Row(
+              children: [
+                // Badge icon
+                Container(
+                  padding: const EdgeInsets.all(PawTokens.sm),
+                  decoration: BoxDecoration(
+                    color: PawTableColors.premiumDark.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(PawTokens.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.workspace_premium,
+                    color: PawTableColors.premiumDark,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: PawTokens.md),
+                // Milestone info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Achievements',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: PawTableColors.premiumDark,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        summary != null
+                            ? '${summary.totalUnlocked}/${summary.totalPossible} milestones unlocked'
+                            : 'Start logging to earn achievements!',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: PawTableColors.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Chevron
+                Icon(
+                  Icons.chevron_right,
+                  color: PawTableColors.premiumDark.withValues(alpha: 0.6),
+                  size: 24,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Skeleton for milestones preview card
+class _MilestonesPreviewSkeleton extends StatelessWidget {
+  const _MilestonesPreviewSkeleton();
 
   @override
   Widget build(BuildContext context) {

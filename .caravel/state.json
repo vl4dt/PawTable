@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "timestamp": 1779846747390,
+  "timestamp": 1779847036119,
   "state": {
     "phases": [],
     "currentPhaseIndex": 0,
@@ -13,9 +13,9 @@
     "totalFleetTokens": 0,
     "mainAgentActivity": {
       "status": "idle",
-      "action": "idle",
-      "detail": "Turn complete",
-      "timestamp": 1779846747388
+      "action": "response",
+      "detail": "Two Priority 0 tasks unblocked:\n\n| Task\u001b0m...\u001b0m",
+      "timestamp": 1779847036118
     }
   }
 }

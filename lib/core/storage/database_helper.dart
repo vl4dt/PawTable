@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 /// behavior_logs, family_members with foreign keys and indexes.
 class DatabaseHelper {
   static Database? _database;
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
 
   Future<Database> get database async {
     _database ??= await _initDatabase();
@@ -183,6 +183,22 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_family_member ON family_members(groupId)');
     await db.execute('CREATE INDEX idx_pet_family ON pet_family_links(groupId)');
     await db.execute('CREATE INDEX idx_pet_family_pet ON pet_family_links(petId)');
+
+    // Milestone achievements (gamification)
+    await db.execute('''
+      CREATE TABLE milestone_achievements (
+        id TEXT PRIMARY KEY,
+        petId TEXT NOT NULL,
+        milestoneId TEXT NOT NULL,
+        progress REAL NOT NULL DEFAULT 0,
+        unlocked INTEGER NOT NULL DEFAULT 0,
+        unlockedAt TEXT,
+        FOREIGN KEY (petId) REFERENCES pets(id)
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_milestone_pet ON milestone_achievements(petId)');
+    await db.execute('CREATE INDEX idx_milestone_pet_milestone ON milestone_achievements(petId, milestoneId)');
   }
 
   Future<void> close() async {
