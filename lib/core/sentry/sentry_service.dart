@@ -1,36 +1,25 @@
-/// Sentry crash reporting service for PawTable.
+/// Stub crash reporting service for PawTable.
 ///
-/// Wraps [SentryFlutter] initialization, capture, and configuration.
-/// Provides graceful degradation: if DSN is empty or Sentry fails to
-/// initialize, the app continues without crash reporting (no crashes).
+/// Sentry is disabled due to Kotlin language version incompatibility
+/// with the sentry_flutter plugin. This stub provides the same public API
+/// but does nothing (no crash reports).
 library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:pawtable/core/theme/themes.dart';
 
-/// Sentry service singleton for crash reporting and error tracking.
+/// Crash reporting service singleton (stub — no actual crash reporting).
 class SentryService {
   SentryService._();
 
   static final SentryService _instance = SentryService._();
 
-  /// Global singleton accessor.
   factory SentryService() => _instance;
 
   bool _isInitialized = false;
 
-  /// Whether Sentry is active and capturing events.
   bool get isInitialized => _isInitialized;
 
-  /// Initialize Sentry with the provided DSN.
-  ///
-  /// If [dsn] is empty, Sentry is not initialized (graceful degradation).
-  /// This allows the app to run in development without a Sentry project.
-  ///
-  /// [environment] defaults to 'production' if [kReleaseMode] is true,
-  /// otherwise 'development'.
   Future<void> initialize({
     String dsn = '',
     String environment = '',
@@ -38,119 +27,46 @@ class SentryService {
     bool enableAutoSessionTracking = true,
     Duration? sessionTrackingInterval,
   }) async {
-    if (_isInitialized) return;
-
-    if (dsn.isEmpty) {
-      return;
-    }
-
-    try {
-      await SentryFlutter.init(
-        (options) {
-          options.dsn = dsn;
-          options.environment = environment.isNotEmpty
-              ? environment
-              : (kReleaseMode ? 'production' : 'development');
-          if (tracesSampleRate != null) {
-            options.tracesSampleRate = tracesSampleRate;
-          }
-          options.enableAutoSessionTracking = enableAutoSessionTracking;
-          if (sessionTrackingInterval != null) {
-            options.autoSessionTrackingInterval = sessionTrackingInterval;
-          }
-          options.beforeSend = (event, hint) {
-            // Filter out low-value Flutter framework events
-            if (event.message?.formatted?.startsWith('[Flutter]') == true) {
-              return null;
-            }
-            return event;
-          };
-        },
-      );
-      _isInitialized = true;
-    } catch (e) {
-      // If Sentry init fails, continue without it
-      _isInitialized = false;
-    }
+    _isInitialized = false;
   }
 
-  /// Capture an exception with optional context.
   Future<void> captureException(
     dynamic exception, {
     StackTrace? stackTrace,
   }) async {
-    if (!_isInitialized) return;
-    await Sentry.captureException(exception, stackTrace: stackTrace);
+    // No-op — crash reporting disabled
+    if (kDebugMode) {
+      debugPrint('[SentryStub] Exception (not reported): $exception');
+    }
   }
 
-  /// Capture a message/event.
   Future<void> captureMessage(
     String message, {
-    SentryLevel? level,
+    dynamic level,
   }) async {
-    if (!_isInitialized) return;
-    await Sentry.captureMessage(
-      message,
-      level: level ?? SentryLevel.info,
-    );
+    // No-op
+    if (kDebugMode) {
+      debugPrint('[SentryStub] Message (not reported): $message');
+    }
   }
 
-  /// Set user context for Sentry events.
-  void setUser({String? userId, String? email, String? username}) {
-    if (!_isInitialized) return;
-    Sentry.configureScope(
-      (scope) => scope.setUser(
-        SentryUser(id: userId, email: email, username: username),
-      ),
-    );
-  }
+  void setUser({String? userId, String? email, String? username}) {}
 
-  /// Add a breadcrumb to the current scope.
-  Future<void> addBreadcrumb(Breadcrumb breadcrumb) async {
-    if (!_isInitialized) return;
-    await Sentry.addBreadcrumb(breadcrumb);
-  }
+  Future<void> addBreadcrumb(dynamic breadcrumb) async {}
 
-  /// Set a tag on the current scope.
-  void setTag(String key, String value) {
-    if (!_isInitialized) return;
-    Sentry.configureScope((scope) => scope.setTag(key, value));
-  }
+  void setTag(String key, String value) {}
 
-  /// Set a context key on the current scope.
-  void setContext(String key, Map<String, dynamic> value) {
-    if (!_isInitialized) return;
-    Sentry.configureScope((scope) => scope.setContexts(key, value));
-  }
+  void setContext(String key, Map<String, dynamic> value) {}
 
-  /// Clear user context.
-  void clearUser() {
-    if (!_isInitialized) return;
-    Sentry.configureScope((scope) => scope.setUser(null));
-  }
+  void clearUser() {}
 
-  /// End the current session (breadcrumb-based).
-  Future<void> endSession() async {
-    if (!_isInitialized) return;
-    await Sentry.addBreadcrumb(
-      Breadcrumb(message: 'Session ended', type: 'session'),
-    );
-  }
+  Future<void> endSession() async {}
 
-  /// Start a new session (breadcrumb-based).
-  Future<void> startSession() async {
-    if (!_isInitialized) return;
-    await Sentry.addBreadcrumb(
-      Breadcrumb(message: 'Session started', type: 'session'),
-    );
-  }
+  Future<void> startSession() async {}
 }
 
-/// Widget that wraps a child in a Sentry error boundary.
-///
-/// Catches unhandled errors in the subtree and reports them to Sentry.
-/// Displays a recovery UI on fatal errors.
-class SentryErrorBoundary extends StatefulWidget {
+/// Widget that wraps a child — no-op error boundary (stub).
+class SentryErrorBoundary extends StatelessWidget {
   const SentryErrorBoundary({
     super.key,
     required this.child,
@@ -158,53 +74,10 @@ class SentryErrorBoundary extends StatefulWidget {
     this.fallbackBuilder,
   });
 
-  /// The widget below this widget in the tree.
   final Widget child;
-
-  /// Optional callback when an error occurs.
   final Function(dynamic error, StackTrace? stackTrace)? onError;
-
-  /// Custom fallback builder for error state.
   final Widget Function(BuildContext context, dynamic error)? fallbackBuilder;
 
   @override
-  State<SentryErrorBoundary> createState() => _SentryErrorBoundaryState();
-}
-
-class _SentryErrorBoundaryState extends State<SentryErrorBoundary> {
-  dynamic _error;
-
-  @override
-  Widget build(BuildContext context) {
-    if (_error != null) {
-      if (widget.fallbackBuilder != null) {
-        return widget.fallbackBuilder!(context, _error);
-      }
-      return MaterialApp(
-        title: 'PawTable',
-        debugShowCheckedModeBanner: false,
-        theme: PawThemes.lightTheme,
-        home: Scaffold(
-          appBar: AppBar(title: const Text('Something went wrong')),
-          body: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('⚠️', style: TextStyle(fontSize: 48)),
-                const SizedBox(height: 16),
-                const Text('An error occurred while loading.'),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => setState(() => _error = null),
-                  child: const Text('Try Again'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return widget.child;
-  }
+  Widget build(BuildContext context) => child;
 }

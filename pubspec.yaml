@@ -63,8 +63,8 @@ dependencies:
   # Logging
   logger: ^2.5.0
 
-  # Crash reporting
-  sentry_flutter: ^8.14.0
+  # Crash reporting (disabled — sentry_flutter Kotlin incompatibility)
+  # sentry_flutter: ^8.14.0
 
   # Code generation annotations
   freezed_annotation: ^2.4.4

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "timestamp": 1779853227554,
+  "timestamp": 1779853780778,
   "state": {
     "phases": [],
     "currentPhaseIndex": 0,
@@ -13,9 +13,9 @@
     "totalFleetTokens": 0,
     "mainAgentActivity": {
       "status": "idle",
-      "action": "idle",
-      "detail": "Turn complete",
-      "timestamp": 1779853227552
+      "action": "response",
+      "detail": "**Beads Status — PawTable**\n\n| Metric |\u001b0m...\u001b0m",
+      "timestamp": 1779853780777
     }
   }
 }

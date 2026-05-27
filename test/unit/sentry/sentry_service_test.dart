@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sentry/sentry.dart';
 import 'package:pawtable/core/sentry/sentry_service.dart';
 
 void main() {
@@ -43,7 +42,7 @@ void main() {
     });
 
     test('addBreadcrumb with no init is a no-op', () async {
-      await service.addBreadcrumb(Breadcrumb(message: 'test'));
+      await service.addBreadcrumb({'message': 'test'});
     });
 
     test('setTag with no init is a no-op', () {
