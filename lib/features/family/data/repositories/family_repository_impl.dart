@@ -1,8 +1,9 @@
 import 'package:uuid/uuid.dart';
-
-import '../../../../core/storage/database_helper.dart';
 import '../../../../core/repository/base_repository.dart';
+import '../../../../core/errors/app_exception.dart';
+import '../../../../core/storage/database_helper.dart';
 import '../../domain/entities/family_group_entity.dart';
+import '../../domain/services/family_permission_service.dart';
 import '../../domain/repositories/family_repository.dart';
 
 /// Family repository implementation using SQLite
@@ -12,6 +13,44 @@ class FamilyRepositoryImpl extends BaseRepository implements FamilyRepository {
 
   FamilyRepositoryImpl({required DatabaseHelper dbHelper})
       : _dbHelper = dbHelper;
+
+  // =========================================================================
+  // PERMISSION CHECKS
+  // =========================================================================
+
+  @override
+  Future<void> checkPermission({
+    required String groupId,
+    required String userId,
+    required FamilyPermission permission,
+  }) async {
+    final member = await getMemberByUserId(groupId, userId);
+    if (member == null) {
+      throw AppException(
+        message: 'You are not a member of this group.',
+        code: 'not_member',
+      );
+    }
+
+    if (!member.can(permission)) {
+      throw AppException(
+        message: 'You do not have permission to perform this action.',
+        code: 'insufficient_permission',
+      );
+    }
+  }
+
+  @override
+  Future<FamilyMemberEntity?> getMemberByUserId(
+    String groupId,
+    String userId,
+  ) async {
+    final members = await getMembers(groupId);
+    return members.firstWhere(
+      (m) => m.userId == userId,
+      orElse: () => throw Exception('Member not found'),
+    );
+  }
 
   // =========================================================================
   // FAMILY GROUPS
@@ -41,6 +80,15 @@ class FamilyRepositoryImpl extends BaseRepository implements FamilyRepository {
       'createdAt': now,
       'updatedAt': now,
     });
+
+    // Owner becomes the first member with owner role
+    await addMember(
+      groupId: id,
+      userId: ownerId,
+      displayName: 'Owner',
+      role: FamilyRole.owner,
+    );
+
     return FamilyGroupEntity(
       id: id,
       name: name,
@@ -60,6 +108,8 @@ class FamilyRepositoryImpl extends BaseRepository implements FamilyRepository {
 
   @override
   Future<void> deleteGroup(String id) async {
+    // Requires full access - owner only
+    // Permission check is done by the caller
     await _dbHelper.deleteFamilyGroup(id);
   }
 

@@ -1,5 +1,6 @@
 import '../../../../core/repository/base_repository.dart';
 import '../entities/family_group_entity.dart';
+import '../services/family_permission_service.dart';
 
 /// Repository for family collaboration data
 abstract class FamilyRepository extends BaseRepository {
@@ -59,4 +60,17 @@ abstract class FamilyRepository extends BaseRepository {
 
   /// Get full family summary
   Future<FamilySummary> getSummary(String groupId);
+
+  /// Check if a user has permission to perform an action on a group
+  Future<void> checkPermission({
+    required String groupId,
+    required String userId,
+    required FamilyPermission permission,
+  });
+
+  /// Get a member by user ID and group ID
+  Future<FamilyMemberEntity?> getMemberByUserId(
+    String groupId,
+    String userId,
+  );
 }

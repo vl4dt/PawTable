@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/design_tokens.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../domain/entities/family_group_entity.dart';
+import '../../domain/services/family_permission_service.dart';
 import '../providers/family_provider.dart';
 
 /// Family view — group creation, member management, pet sharing
@@ -351,6 +353,20 @@ class _GroupDetail extends ConsumerWidget {
             ),
           ),
 
+        // Permission info (for debugging/education)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(PawTokens.md, 0, PawTokens.md, PawTokens.lg),
+            child: Text(
+              'Role permissions: Owner (full access) | Admin (manage members, pets, invites) | Member (view, edit own, share pets) | Pet Sitter (view, edit own)',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: PawTableColors.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ),
+
         // Shared pets section
         if (summary != null && summary.sharedPetIds.isNotEmpty)
           SliverToBoxAdapter(
@@ -375,6 +391,7 @@ class _GroupHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final summary = this.summary;
     final maxMembers = summary?.maxMembers ?? 2;
     final memberCount = summary?.memberCount ?? 0;
 
@@ -431,11 +448,12 @@ class _GroupHeader extends ConsumerWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: PawTableColors.error),
-                  onPressed: () => _showDeleteDialog(context),
-                  tooltip: 'Delete Group',
-                ),
+                if (summary != null && summary.members.any((m) => m.isOwner))
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: PawTableColors.error),
+                    onPressed: () => _showDeleteDialog(context),
+                    tooltip: 'Delete Group',
+                  ),
               ],
             ),
             const SizedBox(height: PawTokens.sm),
@@ -482,15 +500,29 @@ class _GroupHeader extends ConsumerWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              final success = await ProviderScope.containerOf(context, listen: false)
-                  .read(familyListProvider.notifier)
-                  .deleteGroup();
-              if (success) {
-                Navigator.of(ctx).pop();
+              try {
+                final success = await ProviderScope.containerOf(context, listen: false)
+                    .read(familyListProvider.notifier)
+                    .deleteGroup();
+                if (success) {
+                  Navigator.of(ctx).pop();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Family group deleted'),
+                        backgroundColor: PawTableColors.error,
+                      ),
+                    );
+                  }
+                }
+              } catch (e) {
                 if (context.mounted) {
+                  final message = e is AppException
+                      ? e.message
+                      : 'Failed to delete group';
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Family group deleted'),
+                    SnackBar(
+                      content: Text(message),
                       backgroundColor: PawTableColors.error,
                     ),
                   );
@@ -537,8 +569,13 @@ class _MembersSection extends ConsumerWidget {
               ),
             ),
           ),
-          ...summary.members.map((member) => _MemberTile(member: member)),
-          if (summary.memberCount < summary.maxMembers)
+          ...summary.members.map((member) => _MemberTile(
+                member: member,
+                canManage: summary.members.any((m) => m.can(FamilyPermission.manageMembers)),
+              )),
+          // Check if any member has permission to manage members
+          if (summary.memberCount < summary.maxMembers &&
+              summary.members.any((m) => m.can(FamilyPermission.manageMembers)))
             Padding(
               padding: const EdgeInsets.all(PawTokens.md),
               child: ElevatedButton.icon(
@@ -619,7 +656,8 @@ class _MembersSection extends ConsumerWidget {
 /// Individual member tile
 class _MemberTile extends StatelessWidget {
   final FamilyMemberEntity member;
-  const _MemberTile({required this.member});
+  final bool canManage;
+  const _MemberTile({required this.member, this.canManage = false});
 
   @override
   Widget build(BuildContext context) {
@@ -684,8 +722,8 @@ class _MemberTile extends StatelessWidget {
               ],
             ),
           ),
-          // Remove button (owners can't be removed)
-          if (member.role != FamilyRole.owner)
+          // Remove button (owners can't be removed, only leaders can remove members)
+          if (member.role != FamilyRole.owner && canManage)
             IconButton(
               icon: const Icon(Icons.close, size: 20, color: PawTableColors.error),
               onPressed: () => _showRemoveMemberDialog(context, member),
@@ -708,17 +746,31 @@ class _MemberTile extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              final success = await ProviderScope.containerOf(context, listen: false)
-                  .read(familyListProvider.notifier)
-                  .removeMember(member.id);
-              if (success && context.mounted) {
-                Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${member.displayName} removed'),
-                    backgroundColor: PawTableColors.error,
-                  ),
-                );
+              try {
+                final success = await ProviderScope.containerOf(context, listen: false)
+                    .read(familyListProvider.notifier)
+                    .removeMember(member.id);
+                if (success && context.mounted) {
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${member.displayName} removed'),
+                      backgroundColor: PawTableColors.error,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  final message = e is AppException
+                      ? e.message
+                      : 'Failed to remove member';
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(message),
+                      backgroundColor: PawTableColors.error,
+                    ),
+                  );
+                }
               }
             },
             style: ElevatedButton.styleFrom(
@@ -774,22 +826,24 @@ class _SharedPetsSection extends ConsumerWidget {
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.link_off, size: 20),
-                      onPressed: () async {
-                        final success = await ProviderScope.containerOf(context, listen: false)
-                            .read(familyListProvider.notifier)
-                            .unsharePet(petId);
-                        if (success && context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Pet unshared from family'),
-                              backgroundColor: PawTableColors.warning,
-                            ),
-                          );
-                        }
-                      },
-                    ),
+                    // Check if any member has permission to manage pets
+                    if (summary.members.any((m) => m.can(FamilyPermission.managePets)))
+                      IconButton(
+                        icon: const Icon(Icons.link_off, size: 20),
+                        onPressed: () async {
+                          final success = await ProviderScope.containerOf(context, listen: false)
+                              .read(familyListProvider.notifier)
+                              .unsharePet(petId);
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Pet unshared from family'),
+                                backgroundColor: PawTableColors.warning,
+                              ),
+                            );
+                          }
+                        },
+                      ),
                   ],
                 ),
               )),

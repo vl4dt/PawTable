@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../di/app_module.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../domain/entities/family_group_entity.dart';
+import '../../domain/services/family_permission_service.dart';
 import '../../domain/repositories/family_repository.dart';
 
 /// Family repository provider — wired via GetIt DI
@@ -101,6 +103,7 @@ class FamilyNotifier extends StateNotifier<FamilyGroupState> {
   }
 
   /// Add a member to the selected group
+  /// Requires: canManageMembers
   Future<bool> addMember({
     required String userId,
     required String displayName,
@@ -110,6 +113,12 @@ class FamilyNotifier extends StateNotifier<FamilyGroupState> {
     if (groupId == null) return false;
 
     try {
+      await _repository.checkPermission(
+        groupId: groupId,
+        userId: 'user-current',
+        permission: FamilyPermission.manageMembers,
+      );
+
       await _repository.addMember(
         groupId: groupId,
         userId: userId,
@@ -125,11 +134,18 @@ class FamilyNotifier extends StateNotifier<FamilyGroupState> {
   }
 
   /// Remove a member from the selected group
+  /// Requires: canManageMembers
   Future<bool> removeMember(String memberId) async {
     final groupId = state.selectedGroup?.id;
     if (groupId == null) return false;
 
     try {
+      await _repository.checkPermission(
+        groupId: groupId,
+        userId: 'user-current',
+        permission: FamilyPermission.manageMembers,
+      );
+
       await _repository.removeMember(memberId);
       await selectGroup(groupId);
       return true;
@@ -140,11 +156,18 @@ class FamilyNotifier extends StateNotifier<FamilyGroupState> {
   }
 
   /// Update a member's role
+  /// Requires: canManageMembers
   Future<bool> updateMemberRole(String memberId, FamilyRole newRole) async {
     final groupId = state.selectedGroup?.id;
     if (groupId == null) return false;
 
     try {
+      await _repository.checkPermission(
+        groupId: groupId,
+        userId: 'user-current',
+        permission: FamilyPermission.manageMembers,
+      );
+
       final member = await _repository.getMember(memberId);
       if (member == null) return false;
 
@@ -159,11 +182,18 @@ class FamilyNotifier extends StateNotifier<FamilyGroupState> {
   }
 
   /// Share a pet with the selected group
+  /// Requires: canManagePets
   Future<bool> sharePet(String petId) async {
     final groupId = state.selectedGroup?.id;
     if (groupId == null) return false;
 
     try {
+      await _repository.checkPermission(
+        groupId: groupId,
+        userId: 'user-current',
+        permission: FamilyPermission.managePets,
+      );
+
       await _repository.sharePet(
         petId: petId,
         groupId: groupId,
@@ -178,11 +208,18 @@ class FamilyNotifier extends StateNotifier<FamilyGroupState> {
   }
 
   /// Unshare a pet from the selected group
+  /// Requires: canManagePets
   Future<bool> unsharePet(String petId) async {
     final groupId = state.selectedGroup?.id;
     if (groupId == null) return false;
 
     try {
+      await _repository.checkPermission(
+        groupId: groupId,
+        userId: 'user-current',
+        permission: FamilyPermission.managePets,
+      );
+
       await _repository.unsharePet(petId, groupId);
       await selectGroup(groupId);
       return true;
@@ -193,11 +230,18 @@ class FamilyNotifier extends StateNotifier<FamilyGroupState> {
   }
 
   /// Delete the selected group
+  /// Requires: canManageGroup (owner only)
   Future<bool> deleteGroup() async {
     final groupId = state.selectedGroup?.id;
     if (groupId == null) return false;
 
     try {
+      await _repository.checkPermission(
+        groupId: groupId,
+        userId: 'user-current',
+        permission: FamilyPermission.manageGroup,
+      );
+
       await _repository.deleteGroup(groupId);
       final updatedGroups =
           List<FamilyGroupEntity>.from(state.groups)..removeWhere((g) => g.id == groupId);
