@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "timestamp": 1779850979243,
+  "timestamp": 1779851952107,
   "state": {
     "phases": [],
     "currentPhaseIndex": 0,
@@ -13,9 +13,9 @@
     "totalFleetTokens": 0,
     "mainAgentActivity": {
       "status": "idle",
-      "action": "response",
-      "detail": "## Completed\n\n### PawTable-8og.3: Imple\u001b0m...\u001b0m",
-      "timestamp": 1779850979241
+      "action": "idle",
+      "detail": "Turn complete",
+      "timestamp": 1779851952105
     }
   }
 }

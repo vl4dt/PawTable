@@ -15,6 +15,7 @@ import '../../features/tracking/presentation/views/tracking_view.dart';
 import '../../features/calendar/presentation/views/calendar_view.dart';
 import '../../features/family/presentation/views/family_view.dart';
 import '../../features/family/presentation/views/activity_feed_view.dart';
+import '../../features/pets/presentation/views/shared_pets_view.dart';
 import '../../features/premium/presentation/views/premium_view.dart';
 import '../../features/profile/presentation/views/profile_view.dart';
 import '../../features/settings/presentation/views/settings_view.dart';
@@ -50,6 +51,7 @@ class AppRoutes {
   static const String calendar = '/calendar';
   static const String family = '/family';
   static const String familyActivityFeed = '/family/:groupId/activity';
+  static const String sharedPets = '/family/:groupId/shared-pets';
 
   // Full-screen / detail paths
   static const String pets = '/pets';
@@ -277,6 +279,22 @@ final GoRouter router = GoRouter(
       builder: (context, state) {
         final groupId = state.pathParameters['groupId']!;
         return ActivityFeedView(groupId: groupId);
+      },
+    ),
+
+    // Shared Pets
+    GoRoute(
+      path: AppRoutes.sharedPets,
+      name: 'shared-pets',
+      builder: (context, state) {
+        final groupId = state.pathParameters['groupId']!;
+        // TODO: Replace with actual user identity from auth provider
+        return SharedPetsView(
+          groupId: groupId,
+          currentUserId: 'user-current',
+          currentUserName: 'Current User',
+          members: [],
+        );
       },
     ),
 

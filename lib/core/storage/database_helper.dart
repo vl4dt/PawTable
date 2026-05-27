@@ -267,6 +267,28 @@ class DatabaseHelper {
         'CREATE INDEX idx_activity_feed_type ON activity_feed(type)');
     await db.execute(
         'CREATE INDEX idx_activity_feed_timestamp ON activity_feed(timestamp DESC)');
+
+    // Shared pet profiles — pets shared with family groups
+    await db.execute('''
+      CREATE TABLE shared_pet_profiles (
+        id TEXT PRIMARY KEY,
+        petId TEXT NOT NULL,
+        petData TEXT NOT NULL,
+        groupId TEXT NOT NULL,
+        sharedBy TEXT NOT NULL,
+        sharedByName TEXT NOT NULL,
+        sharedAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        FOREIGN KEY (petId) REFERENCES pets(id),
+        FOREIGN KEY (groupId) REFERENCES family_groups(id)
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_shared_pet_pet ON shared_pet_profiles(petId)');
+    await db.execute(
+        'CREATE INDEX idx_shared_pet_group ON shared_pet_profiles(groupId)');
+    await db.execute(
+        'CREATE INDEX idx_shared_pet_unique ON shared_pet_profiles(petId, groupId)');
   }
 
   Future<void> close() async {
@@ -885,5 +907,102 @@ class DatabaseHelper {
       orderBy: 'MAX(timestamp) DESC',
     );
     return results.map((row) => row['petId'] as String).toList();
+  }
+
+  // =========================================================================
+  // SHARED PET PROFILES
+  // =========================================================================
+
+  Future<int> insertSharedPetProfile(Map<String, dynamic> profile) async {
+    final db = await database;
+    return await db.insert('shared_pet_profiles', profile);
+  }
+
+  Future<List<Map<String, dynamic>>> getSharedProfilesByGroup(
+    String groupId,
+  ) async {
+    final db = await database;
+    return await db.query(
+      'shared_pet_profiles',
+      where: 'groupId = ?',
+      whereArgs: [groupId],
+      orderBy: 'updatedAt DESC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getSharedProfile(String id) async {
+    final db = await database;
+    final results = await db.query(
+      'shared_pet_profiles',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<Map<String, dynamic>?> getSharedProfileByPetAndGroup(
+    String petId,
+    String groupId,
+  ) async {
+    final db = await database;
+    final results = await db.query(
+      'shared_pet_profiles',
+      where: 'petId = ? AND groupId = ?',
+      whereArgs: [petId, groupId],
+    );
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<int> updateSharedPetProfile(String id, Map<String, dynamic> profile) async {
+    final db = await database;
+    return await db.update(
+      'shared_pet_profiles',
+      profile,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteSharedPetProfile(String id) async {
+    final db = await database;
+    return await db.delete(
+      'shared_pet_profiles',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<String>> getSharedGroupIds(String petId) async {
+    final db = await database;
+    final results = await db.query(
+      'shared_pet_profiles',
+      where: 'petId = ?',
+      whereArgs: [petId],
+      columns: ['DISTINCT groupId'],
+    );
+    return results.map((row) => row['groupId'] as String).toList();
+  }
+
+  Future<int> touchSharedPetProfile(String id, String updatedAt) async {
+    final db = await database;
+    return await db.update(
+      'shared_pet_profiles',
+      {'updatedAt': updatedAt},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> getSharedPetProfileCount(String petId, String groupId) async {
+    final db = await database;
+    final results = await db.query(
+      'shared_pet_profiles',
+      where: 'petId = ? AND groupId = ?',
+      whereArgs: [petId, groupId],
+      columns: ['COUNT(*) as count'],
+    );
+    return results.isNotEmpty && (results.first['count'] as int) > 0
+        ? 1
+        : 0;
   }
 }
