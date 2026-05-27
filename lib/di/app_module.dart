@@ -6,8 +6,12 @@ import '../features/pets/data/data_sources/pet_local_data_source.dart';
 import '../features/pets/data/repositories/pet_repository_impl.dart';
 import '../features/pets/domain/repositories/pet_repository.dart';
 import '../features/onboarding/domain/services/onboarding_service.dart';
-import '../features/gamification/data/repositories/milestone_repository_impl.dart';
+import '../features/gamification/domain/services/achievement_unlock_service.dart';
+import '../features/gamification/data/repositories/achievement_count_providers.dart';
+import '../features/gamification/data/repositories/achievement_event_repository_impl.dart';
+import '../features/gamification/domain/repositories/achievement_event_repository.dart';
 import '../features/gamification/domain/repositories/milestone_repository.dart';
+import '../features/gamification/data/repositories/milestone_repository_impl.dart';
 import '../features/gamification/data/repositories/streak_repository_impl.dart';
 import '../features/gamification/domain/repositories/streak_repository.dart';
 import '../features/family/data/repositories/family_repository_impl.dart';
@@ -46,12 +50,32 @@ void configureDependencies(String env) {
       () => OnboardingService(storageService: getIt<StorageService>()),
     )
 
-    // Gamification (Streaks + Milestones)
+    // Gamification (Streaks + Milestones + Achievement System)
+    ..registerFactory<StreakRepository>(
+      () => StreakRepositoryImpl(dbHelper: getIt<DatabaseHelper>()),
+    )
     ..registerFactory<MilestoneRepository>(
       () => MilestoneRepositoryImpl(dbHelper: getIt<DatabaseHelper>()),
     )
-    ..registerFactory<StreakRepository>(
-      () => StreakRepositoryImpl(dbHelper: getIt<DatabaseHelper>()),
+    ..registerFactory<AchievementEventRepository>(
+      () => AchievementEventRepositoryImpl(
+        dbHelper: getIt<DatabaseHelper>(),
+      ),
+    )
+    ..registerFactory<FeedingCountProvider>(
+      () => FeedingCountProviderImpl(dbHelper: getIt<DatabaseHelper>()),
+    )
+    ..registerFactory<HealthCountProvider>(
+      () => HealthCountProviderImpl(dbHelper: getIt<DatabaseHelper>()),
+    )
+    ..registerFactory<MedicationCountProvider>(
+      () => MedicationCountProviderImpl(dbHelper: getIt<DatabaseHelper>()),
+    )
+    ..registerFactory<WeightCountProvider>(
+      () => WeightCountProviderImpl(dbHelper: getIt<DatabaseHelper>()),
+    )
+    ..registerFactory<BehaviorCountProvider>(
+      () => BehaviorCountProviderImpl(dbHelper: getIt<DatabaseHelper>()),
     )
 
     // Family Collaboration

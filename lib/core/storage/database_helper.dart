@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 /// behavior_logs, family_members with foreign keys and indexes.
 class DatabaseHelper {
   static Database? _database;
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
 
   Future<Database> get database async {
     _database ??= await _initDatabase();
@@ -199,6 +199,25 @@ class DatabaseHelper {
     await db.execute(
         'CREATE INDEX idx_milestone_pet ON milestone_achievements(petId)');
     await db.execute('CREATE INDEX idx_milestone_pet_milestone ON milestone_achievements(petId, milestoneId)');
+
+    // Achievement events — tracks when achievements are unlocked
+    await db.execute('''
+      CREATE TABLE achievement_events (
+        id TEXT PRIMARY KEY,
+        petId TEXT NOT NULL,
+        achievementType TEXT NOT NULL,
+        achievementId TEXT NOT NULL,
+        eventData TEXT,
+        unlockedAt TEXT NOT NULL,
+        FOREIGN KEY (petId) REFERENCES pets(id)
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_achievement_event_pet ON achievement_events(petId)');
+    await db.execute(
+        'CREATE INDEX idx_achievement_event_pet_type ON achievement_events(petId, achievementType)');
+    await db.execute(
+        'CREATE INDEX idx_achievement_event_type ON achievement_events(achievementType)');
   }
 
   Future<void> close() async {
@@ -550,5 +569,38 @@ class DatabaseHelper {
   Future<int> deletePetFamilyLinksByPet(String petId) async {
     final db = await database;
     return await db.delete('pet_family_links', where: 'petId = ?', whereArgs: [petId]);
+  }
+
+  // =========================================================================
+  // ACHIEVEMENT EVENTS
+  // =========================================================================
+
+  Future<int> insertAchievementEvent(Map<String, dynamic> event) async {
+    final db = await database;
+    return await db.insert('achievement_events', event);
+  }
+
+  Future<List<Map<String, dynamic>>> getAchievementEventsByPet(String petId)
+      async {
+    final db = await database;
+    return await db.query('achievement_events',
+        where: 'petId = ?', whereArgs: [petId], orderBy: 'unlockedAt DESC');
+  }
+
+  Future<List<Map<String, dynamic>>> getAchievementEventsByType(
+    String petId,
+    String achievementType,
+  ) async {
+    final db = await database;
+    return await db.query('achievement_events',
+        where: 'petId = ? AND achievementType = ?',
+        whereArgs: [petId, achievementType],
+        orderBy: 'unlockedAt DESC');
+  }
+
+  Future<int> deleteAchievementEventsByPet(String petId) async {
+    final db = await database;
+    return await db.delete('achievement_events',
+        where: 'petId = ?', whereArgs: [petId]);
   }
 }
