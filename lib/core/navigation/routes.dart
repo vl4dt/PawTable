@@ -15,6 +15,7 @@ import '../../features/tracking/presentation/views/tracking_view.dart';
 import '../../features/calendar/presentation/views/calendar_view.dart';
 import '../../features/family/presentation/views/family_view.dart';
 import '../../features/family/presentation/views/activity_feed_view.dart';
+import '../../features/family/presentation/views/sync_status_view.dart';
 import '../../features/pets/presentation/views/shared_pets_view.dart';
 import '../../features/premium/presentation/views/premium_view.dart';
 import '../../features/profile/presentation/views/profile_view.dart';
@@ -52,6 +53,7 @@ class AppRoutes {
   static const String family = '/family';
   static const String familyActivityFeed = '/family/:groupId/activity';
   static const String sharedPets = '/family/:groupId/shared-pets';
+  static const String syncStatus = '/sync-status';
 
   // Full-screen / detail paths
   static const String pets = '/pets';
@@ -296,6 +298,13 @@ final GoRouter router = GoRouter(
           members: [],
         );
       },
+    ),
+
+    // Sync Status
+    GoRoute(
+      path: AppRoutes.syncStatus,
+      name: 'sync-status',
+      builder: (context, state) => const SyncStatusView(),
     ),
 
     // Pet list

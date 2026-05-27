@@ -24,6 +24,8 @@ import '../features/pets/data/repositories/shared_pet_profile_repository_impl.da
 import '../features/pets/domain/repositories/shared_pet_profile_repository.dart';
 import '../features/pets/data/repositories/pet_sitter_access_repository_impl.dart';
 import '../features/pets/domain/repositories/pet_sitter_access_repository.dart';
+import '../features/family/data/services/firestore_sync_service.dart';
+import '../features/family/domain/repositories/sync_repository.dart';
 
 /// GetIt instance for dependency injection
 final getIt = GetIt.instance;
@@ -104,6 +106,11 @@ void configureDependencies(String env) {
     ..registerFactory<PetSitterAccessRepository>(
       () => PetSitterAccessRepositoryImpl(
         dbHelper: getIt<DatabaseHelper>(),
+      ),
+    )
+    ..registerLazySingleton<FamilySyncRepository>(
+      () => FirestoreSyncService(
+        userId: 'user-current',
       ),
     );
 }
