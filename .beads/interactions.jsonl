@@ -22,3 +22,4 @@
 {"id":"int-56e5d10d","kind":"field_change","created_at":"2026-05-26T09:48:28.528502Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-g61.2","extra":{"field":"status","new_value":"closed","old_value":"open"}}
 {"id":"int-6c8a4a60","kind":"field_change","created_at":"2026-05-26T10:16:38.8798079Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-g61.1","extra":{"field":"status","new_value":"in_progress","old_value":"open"}}
 {"id":"int-8c79eba5","kind":"field_change","created_at":"2026-05-26T10:30:37.8982863Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-g61.1","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Implemented onboarding flow (pet type selection, free trial hook, 7-day trial)"}}
+{"id":"int-f092c890","kind":"field_change","created_at":"2026-05-27T01:31:21.1291374Z","actor":"Ricardo A. Salgado","issue_id":"PawTable-d0e","extra":{"field":"status","new_value":"closed","old_value":"in_progress"}}
