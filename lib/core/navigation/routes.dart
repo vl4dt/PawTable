@@ -19,6 +19,7 @@ import '../../features/profile/presentation/views/profile_view.dart';
 import '../../features/settings/presentation/views/settings_view.dart';
 import '../../features/home/presentation/views/home_dashboard.dart';
 import '../../features/onboarding/presentation/views/onboarding_view.dart';
+import '../../features/gamification/presentation/views/streak_view.dart';
 
 // =========================================================================
 // Route Definitions
@@ -58,6 +59,7 @@ class AppRoutes {
   static const String vaccinations = '/vaccinations/:petId';
   static const String medications = '/medications/:petId';
   static const String tracking = '/tracking/:petId';
+  static const String streaks = '/streaks';
   static const String settings = '/settings';
   static const String premium = '/premium';
   static const String profile = '/profile';
@@ -350,6 +352,16 @@ final GoRouter router = GoRouter(
       },
     ),
 
+    // Streaks
+    GoRoute(
+      path: AppRoutes.streaks,
+      name: 'streaks',
+      builder: (context, state) {
+        final petId = state.uri.queryParameters['petId'] ?? 'default';
+        return StreakView(petId: petId);
+      },
+    ),
+
     // Premium / upgrade
     GoRoute(
       path: AppRoutes.premium,
@@ -386,6 +398,11 @@ final GoRouter router = GoRouter(
 /// context.navigateToFeeding('pet-123');
 /// ```
 extension NavigationX on BuildContext {
+  /// Navigate to streaks page
+  void navigateToStreaks(String petId) {
+    go('${AppRoutes.streaks}?petId=$petId', extra: petId);
+  }
+
   /// Navigate to pet detail page
   void navigateToPetDetail(String petId) {
     go(AppRoutes.petDetail, extra: petId);

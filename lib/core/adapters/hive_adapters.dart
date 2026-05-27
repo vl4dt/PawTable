@@ -356,31 +356,28 @@ class FamilyMemberLocalModelAdapter extends TypeAdapter<FamilyMemberLocalModel> 
     };
     return FamilyMemberLocalModel(
       id: fields[0] as String,
-      petId: fields[1] as String,
+      groupId: fields[1] as String,
       userId: fields[2] as String,
-      name: fields[3] as String,
+      displayName: fields[3] as String,
       role: fields[4] as String,
       joinedAt: fields[5] as String,
-      avatarUrl: fields[6] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, FamilyMemberLocalModel obj) {
-    writer.writeByte(7);
+    writer.writeByte(6);
     writer.writeByte(0);
     writer.write(obj.id);
     writer.writeByte(1);
-    writer.write(obj.petId);
+    writer.write(obj.groupId);
     writer.writeByte(2);
     writer.write(obj.userId);
     writer.writeByte(3);
-    writer.write(obj.name);
+    writer.write(obj.displayName);
     writer.writeByte(4);
     writer.write(obj.role);
     writer.writeByte(5);
     writer.write(obj.joinedAt);
-    writer.writeByte(6);
-    writer.write(obj.avatarUrl);
   }
 }

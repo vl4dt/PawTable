@@ -1,47 +1,58 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/family_group_entity.dart';
 
-/// Family member record — local Hive/SQLite model
+/// Local storage model for family members — maps to SQLite `family_members` table
 class FamilyMemberLocalModel extends Equatable {
   final String id;
-  final String petId;
+  final String groupId;
   final String userId;
-  final String name;
+  final String displayName;
   final String role;
   final String joinedAt;
-  final String? avatarUrl;
 
   const FamilyMemberLocalModel({
     required this.id,
-    required this.petId,
+    required this.groupId,
     required this.userId,
-    required this.name,
+    required this.displayName,
     required this.role,
     required this.joinedAt,
-    this.avatarUrl,
   });
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'petId': petId,
-        'userId': userId,
-        'name': name,
-        'role': role,
-        'joinedAt': joinedAt,
-        'avatarUrl': avatarUrl,
-      };
-
-  factory FamilyMemberLocalModel.fromJson(Map<String, dynamic> json) {
-    return FamilyMemberLocalModel(
-      id: json['id'] as String,
-      petId: json['petId'] as String,
-      userId: json['userId'] as String,
-      name: json['name'] as String,
-      role: json['role'] as String,
-      joinedAt: json['joinedAt'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
+  /// Convert to entity
+  FamilyMemberEntity toEntity() {
+    return FamilyMemberEntity(
+      id: id,
+      groupId: groupId,
+      userId: userId,
+      displayName: displayName,
+      role: FamilyRoleSerializer.fromName(role),
+      joinedAt: DateTime.parse(joinedAt),
     );
   }
 
+  /// Create from database row (Map)
+  factory FamilyMemberLocalModel.fromDbRow(Map<String, dynamic> row) {
+    return FamilyMemberLocalModel(
+      id: row['id'] as String,
+      groupId: row['groupId'] as String,
+      userId: row['userId'] as String,
+      displayName: row['displayName'] as String,
+      role: row['role'] as String,
+      joinedAt: row['joinedAt'] as String,
+    );
+  }
+
+  /// Convert to database map
+  Map<String, dynamic> toDbMap() => {
+        'id': id,
+        'groupId': groupId,
+        'userId': userId,
+        'displayName': displayName,
+        'role': role,
+        'joinedAt': joinedAt,
+      };
+
   @override
-  List<Object?> get props => [id, petId, userId, name, role, joinedAt, avatarUrl];
+  List<Object?> get props => [id, groupId, userId, displayName, role, joinedAt];
 }

@@ -8,7 +8,7 @@ import 'package:path/path.dart';
 /// behavior_logs, family_members with foreign keys and indexes.
 class DatabaseHelper {
   static Database? _database;
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 3;
 
   Future<Database> get database async {
     _database ??= await _initDatabase();
@@ -111,6 +111,54 @@ class DatabaseHelper {
       )
     ''');
 
+    // Streak logs (gamification)
+    await db.execute('''
+      CREATE TABLE streak_logs (
+        id TEXT PRIMARY KEY,
+        petId TEXT NOT NULL,
+        date TEXT NOT NULL,
+        activityType TEXT NOT NULL,
+        FOREIGN KEY (petId) REFERENCES pets(id)
+      )
+    ''');
+
+    // Family groups
+    await db.execute('''
+      CREATE TABLE family_groups (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        ownerId TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+
+    // Family member profiles (cross-pet family membership)
+    await db.execute('''
+      CREATE TABLE family_members (
+        id TEXT PRIMARY KEY,
+        groupId TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        displayName TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'member',
+        joinedAt TEXT NOT NULL,
+        FOREIGN KEY (groupId) REFERENCES family_groups(id)
+      )
+    ''');
+
+    // Pet-family links (shared pets)
+    await db.execute('''
+      CREATE TABLE pet_family_links (
+        id TEXT PRIMARY KEY,
+        petId TEXT NOT NULL,
+        groupId TEXT NOT NULL,
+        sharedBy TEXT NOT NULL,
+        sharedAt TEXT NOT NULL,
+        FOREIGN KEY (petId) REFERENCES pets(id),
+        FOREIGN KEY (groupId) REFERENCES family_groups(id)
+      )
+    ''');
+
     // Family members
     await db.execute('''
       CREATE TABLE family_members (
@@ -129,6 +177,12 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX idx_medications_pet ON medications(petId)');
     await db.execute('CREATE INDEX idx_weight_pet ON weight_logs(petId)');
     await db.execute('CREATE INDEX idx_behavior_pet ON behavior_logs(petId)');
+    await db.execute('CREATE INDEX idx_streak_pet ON streak_logs(petId)');
+    await db.execute('CREATE INDEX idx_streak_date ON streak_logs(petId, date)');
+    await db.execute('CREATE INDEX idx_family_group ON family_groups(ownerId)');
+    await db.execute('CREATE INDEX idx_family_member ON family_members(groupId)');
+    await db.execute('CREATE INDEX idx_pet_family ON pet_family_links(groupId)');
+    await db.execute('CREATE INDEX idx_pet_family_pet ON pet_family_links(petId)');
   }
 
   Future<void> close() async {
@@ -170,7 +224,8 @@ class DatabaseHelper {
     await db.delete('medications', where: 'petId = ?', whereArgs: [id]);
     await db.delete('weight_logs', where: 'petId = ?', whereArgs: [id]);
     await db.delete('behavior_logs', where: 'petId = ?', whereArgs: [id]);
-    await db.delete('family_members', where: 'petId = ?', whereArgs: [id]);
+    await db.delete('streak_logs', where: 'petId = ?', whereArgs: [id]);
+    await db.delete('pet_family_links', where: 'petId = ?', whereArgs: [id]);
     return await db.delete('pets', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -306,6 +361,105 @@ class DatabaseHelper {
   }
 
   // =========================================================================
+  // STREAK LOGS
+  // =========================================================================
+
+  Future<int> insertStreakLog(Map<String, dynamic> log) async {
+    final db = await database;
+    return await db.insert('streak_logs', log);
+  }
+
+  Future<List<Map<String, dynamic>>> getStreakLogsByPet(String petId,
+      {DateTime? from, DateTime? to}) async {
+    final db = await database;
+    String query = 'petId = ?';
+    List<dynamic> args = [petId];
+    if (from != null) {
+      query += ' AND date >= ?';
+      args.add(from.toIso8601String());
+    }
+    if (to != null) {
+      query += ' AND date <= ?';
+      args.add(to.toIso8601String());
+    }
+    return await db.query('streak_logs', where: query, whereArgs: args,
+        orderBy: 'date DESC');
+  }
+
+  Future<List<String>> getStreakDatesByPet(String petId,
+      {DateTime? from, DateTime? to}) async {
+    final db = await database;
+    String query = 'petId = ?';
+    List<dynamic> args = [petId];
+    if (from != null) {
+      query += ' AND date >= ?';
+      args.add(from.toIso8601String());
+    }
+    if (to != null) {
+      query += ' AND date <= ?';
+      args.add(to.toIso8601String());
+    }
+    final results = await db.query('streak_logs',
+        columns: ['date'], where: query, whereArgs: args);
+    return results.map((r) => r['date'] as String).toList();
+  }
+
+  Future<bool> hasStreakOnDate(String petId, String date) async {
+    final db = await database;
+    final results = await db.query('streak_logs',
+        where: 'petId = ? AND date = ?', whereArgs: [petId, date]);
+    return results.isNotEmpty;
+  }
+
+  Future<int> updateStreakLog(String id, Map<String, dynamic> log) async {
+    final db = await database;
+    return await db.update('streak_logs', log, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteStreakLog(String id) async {
+    final db = await database;
+    return await db.delete('streak_logs', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteStreakLogsByPet(String petId) async {
+    final db = await database;
+    return await db.delete('streak_logs', where: 'petId = ?', whereArgs: [petId]);
+  }
+
+  // =========================================================================
+  // FAMILY GROUPS
+  // =========================================================================
+
+  Future<int> insertFamilyGroup(Map<String, dynamic> group) async {
+    final db = await database;
+    return await db.insert('family_groups', group);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllFamilyGroups() async {
+    final db = await database;
+    return await db.query('family_groups', orderBy: 'createdAt DESC');
+  }
+
+  Future<Map<String, dynamic>?> getFamilyGroup(String id) async {
+    final db = await database;
+    final results = await db.query('family_groups', where: 'id = ?', whereArgs: [id]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<int> updateFamilyGroup(String id, Map<String, dynamic> group) async {
+    final db = await database;
+    return await db.update('family_groups', group, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteFamilyGroup(String id) async {
+    final db = await database;
+    // Cascade delete members and links
+    await db.delete('family_members', where: 'groupId = ?', whereArgs: [id]);
+    await db.delete('pet_family_links', where: 'groupId = ?', whereArgs: [id]);
+    return await db.delete('family_groups', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // =========================================================================
   // FAMILY MEMBERS
   // =========================================================================
 
@@ -314,13 +468,71 @@ class DatabaseHelper {
     return await db.insert('family_members', member);
   }
 
-  Future<List<Map<String, dynamic>>> getFamilyMembersByPet(String petId) async {
+  Future<List<Map<String, dynamic>>> getFamilyMembersByGroup(String groupId) async {
     final db = await database;
-    return await db.query('family_members', where: 'petId = ?', whereArgs: [petId]);
+    return await db.query('family_members', where: 'groupId = ?', whereArgs: [groupId],
+        orderBy: 'joinedAt DESC');
+  }
+
+  Future<Map<String, dynamic>?> getFamilyMember(String id) async {
+    final db = await database;
+    final results = await db.query('family_members', where: 'id = ?', whereArgs: [id]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<int> updateFamilyMember(String id, Map<String, dynamic> member) async {
+    final db = await database;
+    return await db.update('family_members', member, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteFamilyMember(String id) async {
     final db = await database;
     return await db.delete('family_members', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteFamilyMembersByGroup(String groupId) async {
+    final db = await database;
+    return await db.delete('family_members', where: 'groupId = ?', whereArgs: [groupId]);
+  }
+
+  // =========================================================================
+  // PET FAMILY LINKS
+  // =========================================================================
+
+  Future<int> insertPetFamilyLink(Map<String, dynamic> link) async {
+    final db = await database;
+    return await db.insert('pet_family_links', link);
+  }
+
+  Future<List<Map<String, dynamic>>> getPetFamilyLinksByPet(String petId) async {
+    final db = await database;
+    return await db.query('pet_family_links', where: 'petId = ?', whereArgs: [petId]);
+  }
+
+  Future<List<Map<String, dynamic>>> getPetFamilyLinksByGroup(String groupId) async {
+    final db = await database;
+    return await db.query('pet_family_links', where: 'groupId = ?', whereArgs: [groupId]);
+  }
+
+  Future<bool> isPetSharedWithGroup(String petId, String groupId) async {
+    final db = await database;
+    final results = await db.query('pet_family_links',
+        where: 'petId = ? AND groupId = ?', whereArgs: [petId, groupId]);
+    return results.isNotEmpty;
+  }
+
+  Future<int> deletePetFamilyLink(String id) async {
+    final db = await database;
+    return await db.delete('pet_family_links', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> deletePetFamilyLinksByGroup(String groupId) async {
+    final db = await database;
+    return await db.delete('pet_family_links', where: 'groupId = ?', whereArgs: [groupId]);
+  }
+
+  Future<int> deletePetFamilyLinksByPet(String petId) async {
+    final db = await database;
+    return await db.delete('pet_family_links', where: 'petId = ?', whereArgs: [petId]);
   }
 }

@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/navigation/routes.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/theme/design_tokens.dart';
 import '../../../../core/utils/date_utils.dart' as app_date;
 import '../../../../shared/widgets/pet_avatar.dart';
 import '../../../pets/domain/entities/pet_entity.dart';
 import '../../../pets/presentation/providers/pet_provider.dart';
 import '../widgets/home_pet_card.dart';
 import '../widgets/health_at_glance_card.dart';
+import '../../../gamification/presentation/providers/streak_provider.dart';
 import '../widgets/quick_log_row.dart';
 import '../widgets/recent_activity_list.dart';
 
@@ -162,6 +164,16 @@ class _HomeDashboardState extends ConsumerState<HomeDashboard> {
             onTap: () {
               if (selectedPet != null) {
                 context.push(AppRoutes.health, extra: selectedPet.id);
+              }
+            },
+          ),
+          QuickLogButton(
+            icon: Icons.local_fire_department,
+            label: 'Streaks',
+            color: PawTableColors.primary,
+            onTap: () {
+              if (selectedPet != null) {
+                context.navigateToStreaks(selectedPet.id);
               }
             },
           ),
@@ -384,6 +396,12 @@ class _SinglePetBody extends StatelessWidget {
             petId: pet.id,
           ),
         ),
+        // Streaks preview card
+        SliverToBoxAdapter(
+          child: _StreaksPreviewCard(
+            petId: pet.id,
+          ),
+        ),
         // Recent activity
         const SliverToBoxAdapter(
           child: RecentActivityList(),
@@ -429,6 +447,12 @@ class _MultiPetBody extends StatelessWidget {
             petId: selectedPet.id,
           ),
         ),
+        // Streaks preview card
+        SliverToBoxAdapter(
+          child: _StreaksPreviewCard(
+            petId: selectedPet.id,
+          ),
+        ),
         // Recent activity
         const SliverToBoxAdapter(
           child: RecentActivityList(),
@@ -438,6 +462,122 @@ class _MultiPetBody extends StatelessWidget {
           child: SizedBox(height: 80),
         ),
       ],
+    );
+  }
+}
+
+/// Streaks preview card on the home dashboard
+///
+/// Shows current streak count and a "View Streaks" button.
+class _StreaksPreviewCard extends ConsumerWidget {
+  final String petId;
+  const _StreaksPreviewCard({required this.petId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(streakSummaryProvider);
+
+    // Auto-load streak data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (state.summary == null && state.error == null) {
+        ref.read(streakSummaryProvider.notifier).loadSummary(petId);
+      }
+    });
+
+    if (state.isLoading) {
+      return _StreaksPreviewSkeleton();
+    }
+
+    final summary = state.summary;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: PawTokens.md, vertical: 4),
+      decoration: BoxDecoration(
+        color: PawTableColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(PawTokens.radiusLg),
+        border: Border.all(
+          color: PawTableColors.primary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(PawTokens.radiusLg),
+          onTap: () => context.navigateToStreaks(petId),
+          child: Padding(
+            padding: const EdgeInsets.all(PawTokens.md),
+            child: Row(
+              children: [
+                // Fire icon
+                Container(
+                  padding: const EdgeInsets.all(PawTokens.sm),
+                  decoration: BoxDecoration(
+                    color: PawTableColors.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(PawTokens.radiusMd),
+                  ),
+                  child: Icon(
+                    Icons.local_fire_department,
+                    color: PawTableColors.primaryDark,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: PawTokens.md),
+                // Streak info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Streaks',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: PawTableColors.primaryDark,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        summary != null && summary.currentStreak > 0
+                            ? '${summary.currentStreak} day streak 🔥'
+                            : 'Start your streak — log today!',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: PawTableColors.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Chevron
+                Icon(
+                  Icons.chevron_right,
+                  color: PawTableColors.primary.withValues(alpha: 0.6),
+                  size: 24,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Skeleton for streaks preview card
+class _StreaksPreviewSkeleton extends StatelessWidget {
+  const _StreaksPreviewSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: PawTokens.md, vertical: 4),
+      decoration: BoxDecoration(
+        color: PawTableColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(PawTokens.radiusLg),
+      ),
+      height: 72,
     );
   }
 }

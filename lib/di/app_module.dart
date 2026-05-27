@@ -6,6 +6,10 @@ import '../features/pets/data/data_sources/pet_local_data_source.dart';
 import '../features/pets/data/repositories/pet_repository_impl.dart';
 import '../features/pets/domain/repositories/pet_repository.dart';
 import '../features/onboarding/domain/services/onboarding_service.dart';
+import '../features/gamification/data/repositories/streak_repository_impl.dart';
+import '../features/gamification/domain/repositories/streak_repository.dart';
+import '../features/family/data/repositories/family_repository_impl.dart';
+import '../features/family/domain/repositories/family_repository.dart';
 
 /// GetIt instance for dependency injection
 final getIt = GetIt.instance;
@@ -38,5 +42,15 @@ void configureDependencies(String env) {
     // Onboarding
     ..registerFactory<OnboardingService>(
       () => OnboardingService(storageService: getIt<StorageService>()),
+    )
+
+    // Gamification (Streaks)
+    ..registerFactory<StreakRepository>(
+      () => StreakRepositoryImpl(dbHelper: getIt<DatabaseHelper>()),
+    )
+
+    // Family Collaboration
+    ..registerFactory<FamilyRepository>(
+      () => FamilyRepositoryImpl(dbHelper: getIt<DatabaseHelper>()),
     );
 }
