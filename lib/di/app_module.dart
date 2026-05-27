@@ -15,7 +15,9 @@ import '../features/gamification/data/repositories/milestone_repository_impl.dar
 import '../features/gamification/data/repositories/streak_repository_impl.dart';
 import '../features/gamification/domain/repositories/streak_repository.dart';
 import '../features/family/data/repositories/family_repository_impl.dart';
+import '../features/family/data/repositories/invite_repository_impl.dart';
 import '../features/family/domain/repositories/family_repository.dart';
+import '../features/family/domain/repositories/invite_repository.dart';
 
 /// GetIt instance for dependency injection
 final getIt = GetIt.instance;
@@ -81,5 +83,8 @@ void configureDependencies(String env) {
     // Family Collaboration
     ..registerFactory<FamilyRepository>(
       () => FamilyRepositoryImpl(dbHelper: getIt<DatabaseHelper>()),
+    )
+    ..registerFactory<InviteRepository>(
+      () => InviteRepositoryImpl(dbHelper: getIt<DatabaseHelper>()),
     );
 }

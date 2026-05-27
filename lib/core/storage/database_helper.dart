@@ -218,6 +218,26 @@ class DatabaseHelper {
         'CREATE INDEX idx_achievement_event_pet_type ON achievement_events(petId, achievementType)');
     await db.execute(
         'CREATE INDEX idx_achievement_event_type ON achievement_events(achievementType)');
+
+    // Invite tokens — family group invites
+    await db.execute('''
+      CREATE TABLE invite_tokens (
+        id TEXT PRIMARY KEY,
+        groupId TEXT NOT NULL,
+        createdById TEXT NOT NULL,
+        code TEXT UNIQUE NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        maxUses INTEGER NOT NULL DEFAULT 1,
+        usedCount INTEGER NOT NULL DEFAULT 0,
+        expiresAt TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (groupId) REFERENCES family_groups(id)
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_invite_token_code ON invite_tokens(code)');
+    await db.execute(
+        'CREATE INDEX idx_invite_token_group ON invite_tokens(groupId)');
   }
 
   Future<void> close() async {
@@ -602,5 +622,50 @@ class DatabaseHelper {
     final db = await database;
     return await db.delete('achievement_events',
         where: 'petId = ?', whereArgs: [petId]);
+  }
+
+  // =========================================================================
+  // INVITE TOKENS
+  // =========================================================================
+
+  Future<int> insertInviteToken(Map<String, dynamic> invite) async {
+    final db = await database;
+    return await db.insert('invite_tokens', invite);
+  }
+
+  Future<Map<String, dynamic>?> getInviteToken(String id) async {
+    final db = await database;
+    final results = await db.query('invite_tokens',
+        where: 'id = ?', whereArgs: [id]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<Map<String, dynamic>?> getInviteTokenByCode(String code) async {
+    final db = await database;
+    final results = await db.query('invite_tokens',
+        where: 'code = ?', whereArgs: [code]);
+    return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<int> updateInviteToken(String id, Map<String, dynamic> invite) async {
+    final db = await database;
+    return await db.update('invite_tokens', invite,
+        where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Map<String, dynamic>>> getActiveInvitesByGroup(String groupId) async {
+    final db = await database;
+    return await db.query('invite_tokens',
+        where: 'groupId = ? AND status = ?',
+        whereArgs: [groupId, 'active']);
+  }
+
+  Future<int> expireOldInvites() async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+    return await db.update('invite_tokens',
+        {'status': 'expired'},
+        where: "status = 'active' AND expiresAt < ?",
+        whereArgs: [now]);
   }
 }
