@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "embedded",
-  "dolt_database": "PawTable",
-  "project_id": "ae0cc39f-6813-4c97-ada4-f65be5e29d6c"
-}
